@@ -495,7 +495,7 @@ mkSetDecentralizationParamTxs coreNodes pVer ttl dNew =
 -------------------------------------------------------------------------------}
 
 initialLovelacePerCoreNode :: Word64
-initialLovelacePerCoreNode = 1000
+initialLovelacePerCoreNode = 1000000
 
 mkCredential :: TPraosCrypto era => SL.SignKeyDSIGN era -> SL.Credential r era
 mkCredential = SL.KeyHashObj . mkKeyHash

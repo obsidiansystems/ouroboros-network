@@ -10,6 +10,7 @@ module Test.ThreadNet.TxGen.Shelley (
   , WhetherToGeneratePPUs(..)
   , genTx
   , mkGenEnv
+  , shelleyGenTxs
   ) where
 
 import           Control.Monad.Except (runExcept)
@@ -48,7 +49,17 @@ instance HashAlgorithm h => TxGen (ShelleyBlock (MockShelley h)) where
 
   type TxGenExtra (ShelleyBlock (MockShelley h)) = ShelleyTxGenExtra h
 
-  testGenTxs _coreNodeId _numCoreNodes curSlotNo cfg extra lst
+  testGenTxs _coreNodeId _numCoreNodes curSlotNo cfg extra lst =
+      shelleyGenTxs curSlotNo (configLedger cfg) extra lst
+
+shelleyGenTxs
+    :: forall h. HashAlgorithm h
+    => SlotNo
+    -> LedgerConfig (ShelleyBlock (MockShelley h))
+    -> ShelleyTxGenExtra h
+    -> LedgerState (ShelleyBlock (MockShelley h))
+    -> Gen [GenTx (ShelleyBlock (MockShelley h))]
+shelleyGenTxs curSlotNo lcfg extra lst
       | stgeStartAt > curSlotNo = pure []
       | otherwise               = do
       n <- choose (0, 20)
@@ -59,16 +70,13 @@ instance HashAlgorithm h => TxGen (ShelleyBlock (MockShelley h)) where
         , stgeStartAt
         } = extra
 
-      lcfg :: LedgerConfig (ShelleyBlock (MockShelley h))
-      lcfg = configLedger cfg
-
       go :: [GenTx (ShelleyBlock (MockShelley h))]  -- ^ Accumulator
          -> Integer  -- ^ Number of txs to still produce
          -> TickedLedgerState (ShelleyBlock (MockShelley h))
          -> Gen [GenTx (ShelleyBlock (MockShelley h))]
       go acc 0 _  = return (reverse acc)
       go acc n st = do
-        mbTx <- genTx cfg curSlotNo st stgeGenEnv
+        mbTx <- genTx_ curSlotNo st stgeGenEnv
         case mbTx of
           Nothing -> return (reverse acc)  -- cannot afford more transactions
           Just tx -> case runExcept $ applyTx lcfg curSlotNo tx st of
@@ -77,14 +85,22 @@ instance HashAlgorithm h => TxGen (ShelleyBlock (MockShelley h)) where
               Right st' -> go (tx:acc) (n - 1) st'
 
 genTx
-  :: forall h. HashAlgorithm h
+  :: HashAlgorithm h
   => TopLevelConfig (ShelleyBlock (MockShelley h))
   -> SlotNo
   -> TickedLedgerState (ShelleyBlock (MockShelley h))
   -> Gen.GenEnv (MockShelley h)
   -> Gen (Maybe (GenTx (ShelleyBlock (MockShelley h))))
-genTx _cfg slotNo TickedShelleyLedgerState { tickedShelleyLedgerState } genEnv =
-    Just . mkShelleyTx <$> Gen.genTx
+genTx _cfg = genTx_
+
+genTx_
+  :: forall h. HashAlgorithm h
+  => SlotNo
+  -> TickedLedgerState (ShelleyBlock (MockShelley h))
+  -> Gen.GenEnv (MockShelley h)
+  -> Gen (Maybe (GenTx (ShelleyBlock (MockShelley h))))
+genTx_ slotNo TickedShelleyLedgerState { tickedShelleyLedgerState } genEnv =
+    (Just . mkShelleyTx) <$> Gen.genTx
       genEnv
       ledgerEnv
       (utxoSt, dpState)

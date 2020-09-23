@@ -31,6 +31,8 @@ module Ouroboros.Consensus.Cardano.Node (
   , pattern CardanoNodeToClientVersion2
   , pattern CardanoNodeToClientVersion3
   , pattern CardanoNodeToClientVersion4
+    -- * For use in tests
+  , mkPartialLedgerConfigShelley
   ) where
 
 import qualified Codec.CBOR.Decoding as CBOR

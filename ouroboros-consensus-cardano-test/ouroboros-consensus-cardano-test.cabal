@@ -24,6 +24,11 @@ library
                        Test.Consensus.Cardano.Generators
                        Test.Consensus.Cardano.MockCrypto
 
+                       Test.ThreadNet.Infra.ShelleyShelley
+                       Test.ThreadNet.TxGen.ShelleyShelley
+
+                       Test.ThreadNet.Infra.TwoEras
+
                        Test.ThreadNet.TxGen.Cardano
 
   build-depends:       base
@@ -77,6 +82,7 @@ test-suite test
                        Test.Consensus.Cardano.Golden
                        Test.Consensus.Cardano.Serialisation
                        Test.ThreadNet.Cardano
+                       Test.ThreadNet.ShelleyShelley
 
   build-depends:       base
                      , bytestring
