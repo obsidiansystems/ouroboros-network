@@ -31,10 +31,7 @@ set -euo pipefail
 #   o RealTPraos     6.2  seconds
 rows=(
     # From the slowest individual invocation ...
-    '1 Cardano    Cardano        1500'  # ~50 minutes per
-    '1 Cardano    ShelleyShelley 50'    # ~35 minutes per
-    '5 RealTPraos RealTPraos     100'   # ~10 minutes per
-    '5 Cardano    Cardano        100'   # ~5  minutes per
+    '1 Cardano    ShelleyShelley 100'    # ????
     # ... to fastest individual invocation
     #
     # And the number of invocations is non-decreasing.
