@@ -204,12 +204,11 @@ initInternalState NodeKernelArgs { tracers, chainDB, registry, cfg
                                  , mempoolCapacityOverride
                                  } = do
     varCandidates <- newTVarIO mempty
+    let args      =  MempoolArgs (configLedger cfg) txInBlockSize mempoolCapacityOverride
     mempool       <- openMempool registry
                                  (chainDBLedgerInterface chainDB)
-                                 (configLedger cfg)
-                                 mempoolCapacityOverride
+                                 args
                                  (mempoolTracer tracers)
-                                 txInBlockSize
 
     fetchClientRegistry <- newFetchClientRegistry
 
