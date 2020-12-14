@@ -79,7 +79,7 @@ maxConnectionAttemptDelay = 2 -- 2s delay
 -- | Minimum time to wait between ip reconnects
 --
 ipRetryDelay :: DiffTime
-ipRetryDelay = 10 -- 10s delay
+ipRetryDelay = 2 -- 10s delay
 
 data ResOrAct m addr tr r =
      Res !(Result addr r)
