@@ -38,18 +38,3 @@ The storage layer might be storing the header state, but that doesn't
 explain its existence.
 
 ChainDepState, (ChainIndepState), LedgerState, ExtLedgerState
-
-\section{Serialisation abstractions}
-
-TODO: Discuss the various serialisation abstractions we use, and the problem that
-they are solving.
-
-\subsection{Nested contexts}
-\label{storage:nested-contexts}
-
-TODO: Discuss why we need this abstraction: if we have multiple types of blocks
-in a ledger, each of which with a corresponding header type, then those headers
-will not need a tag differentiating them when they appear \emph{nested} inside
-a block, but \emph{will} need such a tag when we encode them outside that scope,
-for instance when we are transmissting headers as part of the chain sync
-protocol (\cref{chainsyncclient}).

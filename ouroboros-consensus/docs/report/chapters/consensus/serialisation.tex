@@ -1,0 +1,15 @@
+\chapter{Serialisation abstractions}
+\label{serialisation}
+
+TODO: Discuss the various serialisation abstractions we use, and the problem that
+they are solving.
+
+\section{Nested contexts}
+\label{serialisation:nested-contexts}
+
+TODO: Discuss why we need this abstraction: if we have multiple types of blocks
+in a ledger, each of which with a corresponding header type, then those headers
+will not need a tag differentiating them when they appear \emph{nested} inside
+a block, but \emph{will} need such a tag when we encode them outside that scope,
+for instance when we are transmissting headers as part of the chain sync
+protocol (\cref{chainsyncclient}).
