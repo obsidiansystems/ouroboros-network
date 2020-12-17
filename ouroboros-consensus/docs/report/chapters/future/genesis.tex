@@ -9,18 +9,20 @@
 
 \section{Introduction}
 
+\subsection{Background: understanding the Longest Chain rule}
+\label{genesis:background:longest-chain}
 
+Recall the Praos chain selection rule:
 
-
-
-\pagebreak
-
-\debugsep{OLD}
-
-\section{Introduction}
-
-\subsection{Chain length versus chain density}
-\label{genesis:intro:length-vs-density}
+\begin{definition}[Longest Chain Rule]
+\label{longest-chain-rule}
+A candidate chain is preferred over our current chain if
+%
+\begin{enumerate}
+\item it is longer than our chain, and
+\item the intersection point is no more than $k$ blocks away from our tip.
+\end{enumerate}
+\end{definition}
 
 The purpose of chain selection is to resolve temporary forks that arise from the
 normal operation of the protocol (such as when there are multiple leaders in a
@@ -40,7 +42,8 @@ intersection point: as we get further away from that intersection point, the
 malicious node can attempt to influence the leadership schedule for future slots
 to their advantage.
 
-When all nodes in the system are up to date, they will all share the same chain,
+The Praos security analysis \cite{cryptoeprint:2017:573} tells us that provided
+all (honest) nodes are online all the time, they will all share the same chain,
 except for blocks near the tips of those chains. Moreover, blocks with a slot
 number ahead of the wall clock are considered invalid. This means that the only
 way\footnote{The chain sync client does actually allow for some clock skew.
@@ -60,6 +63,174 @@ another is by having more filled slots between the tip of the shared prefix and
 \end{tikzpicture}
 \end{center}
 %
+This motivates the first part of the Longest Chain rule: chain length is a
+useful proxy for chain density. The second part of the rule---the intersection
+point is no more than $k$ blocks away from our tip---is important because we can
+only meaningfully compare density \emph{near the intersection point}. As
+we get further away from the intersection point, the attacker can start to
+influence the leadership schedule. This means that if the attacker's chain
+forks off from the honest chain far back enough, they can construct a chain
+that is longer than the honest chain. The side condition to the Longest Chain
+rule means that we will simply not even consider chains that fork off that
+far back.We can still resolve minor forks that happen in the honest chain during
+the normal operation of the protocol, because---so the metatheory
+guarantees---those will not be deeper than $k$ blocks.
+
+\subsection{Nodes joining late}
+
+When new nodes join the network (or rejoin after having been offline for a
+while), they don't have the advantage of having been online since the start of
+the system, and have no sufficiently long prefix of the honest chain available.
+As we saw at the end of \cref{genesis:background:longest-chain}, simply looking
+at chain length is insufficient to distinguish the honest chain from malicious
+chains: given enough time, an attacker can produce a chain that is longer than
+the honest chain:
+%
+\begin{center}
+\begin{tikzpicture}
+\draw (-2,0) node{$\bullet$} -- (0,0);
+\draw (0,0) node{$\bullet$} -- (6,0) node{$\bullet$} node[right] {honest chain};
+\draw (0,0) -- (0,-1) -- (8,-1) node{$\bullet$} node[right]{attacker's chain};
+\path (0,0) -- (6,0) node[pos=0.5, above=0.5]{$\overbrace{\hspace{6cm}}^{\text{$\gg k$ blocks}}$};
+\end{tikzpicture}
+\end{center}
+%
+When a node's current chain is somewhere along that commom prefix and uses the
+longest chain rule, they will choose the attacker's chain rather than the honest
+chain. Moreover, they will now never switch to the honest chain, because the
+intersection point with that chain is more than $k$ blocks ago. If a node would
+get a ``leg up'' in the form of a reliable message telling which chain to adopt
+when joining the network (such a message is known as a ``checkpoint'' in the
+consensus literature), the Praos rule from that point forward would prevent them
+from (permanently) adopting the wrong chain, but Praos cannot be used to help
+nodes ``bootstrap'' when they are behind.
+
+So far we have just been discussing Praos as it is described in theory. The
+situation in practice is worse. In the abstract models of the consensus
+algorithm, it is assumed entire chains are being broadcast and validated. In
+reality, chains are downloaded and validated one block at a time.
+We therefore don't see a candidate chain's \emph{true} length; the length of a
+candidate we see depends on how much of that candidate's chain we have
+downloaded\footnote{Nodes do report their ``true length'', but since we have no
+way of verifying this information until we have seen the entire chain, we can
+make no use of this information for the purpose of chain selection.}. Defining
+chain selection in terms of chain length, where our \emph{perceived} chain
+length depends on what we decide to download, is obviously rather circular.
+In terms of the above discussion, it means that the attacker's chain doesn't
+even need to be longer than the honest chain:
+%
+\begin{center}
+\begin{tikzpicture}
+\draw (-2,0) node{$\bullet$} -- (0,0);
+\draw (0,0) node{$\bullet$} -- (10,0) node{$\bullet$} node[right] {honest chain};
+\draw (0,0) -- (0,-1) -- (4,-1) node{$\bullet$} node[right]{attacker's chain};
+\path (0,0) -- (4,0) node[pos=0.5, above=0.5]{$\overbrace{\hspace{4cm}}^{\text{$> k$ blocks}}$};
+\end{tikzpicture}
+\end{center}
+%
+If the attacker's chain contains more than $k$ blocks after the intersection
+point, and we \emph{happen} to download that chain first, we would adopt it and
+subsequently be unable to switch to the honest chain, since that would involve a
+rollback of more than $k$ blocks, which the Praos rule forbids.
+
+\subsection{The Density rule}
+
+It is therefore clear we need a different chain selection rule, and the
+Ouroboros Genesis paper \cite{cryptoeprint:2018:378} proposes one:
+%
+\begin{definition}[Density Rule]
+A candidate chain is preferred over our current chain if it is denser
+(contains more blocks) in a window of $s$ slots anchored at the intersection
+between the two chains.
+\end{definition}
+%
+(We will refer to this as the Density rule, rather than the Genesis rule,
+because the rule as we will present in in this chapter is dfferent from, though
+equivalent to, the rule as it presented in the paper.\VerifiedByResearchers{}).
+Technically speaking, $s$ is a parameter of the rule, but in practice we will
+want to set it to be equal to the stability window:\VerifiedByResearchers{}
+
+\begin{definition}[Genesis window size]
+The genesis window size $s$ must be set to $s = 3k/f$.
+\end{definition}
+
+As it turns out, for nodes that are up to date, this new rule does not change
+how chain selection works:
+
+\begin{lemma}[Rule Equivalence]
+\label{rule-equivalence}
+When comparing two chains that only differ in the last $k$ blocks, the
+Density rule and the Longest Chain rule are equivalent.
+\end{lemma}
+
+\begin{proof}[Proof (sketch)]
+The two chains differ only in the last $k$ blocks; since $s$ slots will contain
+at least $k$ blocks, the fragments of the chain after the intersection point
+will not exceed $s$ slots:
+%
+\begin{center}
+\begin{tikzpicture}
+\draw (0,0) -- (6,0) coordinate (I);
+\path (I) -- ++(0,1) -- ++(3,0) node[pos=0.5,above=0.1]{$\overbrace{\hspace{3cm}}^\text{$\le k$ blocks}$};
+\draw (I) -- ++(1,1) -- ++(1.5,0);
+\draw (I) -- ++(1,-1) -- ++ (2,0);
+\draw [dashed]
+    (I)
+  -- ++(0, 2)
+  -- ++(4, 0) node[pos=0.5,above]{$s$ slots}
+  -- ++(0, -3.5)
+  -- ++(-4, 0)
+  -- cycle;
+\end{tikzpicture}
+\end{center}
+%
+This means that density within the window indeed is just chain length.
+\end{proof}
+
+Unlike the Longest Chain rule, the Density rule does not impose a maximum
+rollback. It does not need to, as it always considers density \emph{at the
+intersection point}. From an implementation perspective, this is useful;
+in a situation such as
+%
+\begin{center}
+\begin{tikzpicture}
+\draw (-2,0) node{$\bullet$} -- (0,0);
+\draw (0,0) node{$\bullet$} -- (10,0) node{$\bullet$} node[right] {honest chain};
+\draw (0,0) -- (0,-1) -- (4,-1) node{$\bullet$} node[right]{attacker's chain};
+\path (0,0) -- (4,0) node[pos=0.5, above=0.5]{$\overbrace{\hspace{4cm}}^{\text{$> k$ blocks}}$};
+\end{tikzpicture}
+\end{center}
+%
+if we happen to see and adopt the attacker's chain first, and then later find
+the honest chain, we can still adopt the honest chain (which will be denser at
+the intersection point, because of the honest majority). However, this  would
+involve a rollback of more than $k$ blocks. This is problematic for consensus;
+we depend on this maximum rollback in many ways
+(\cref{consensus:overview:k,storage:components,chainsyncclient:validation,chainsyncclient:forecasting}
+and others), and we will want to \emph{continue} to depend on it. Less
+fundamentally, but nonetheless importantly, it also doesn't fit very well with
+our look-at-the-tip-only approach (\cref{consensus:overview:chainsel}). The
+resolution of this problem is the subject of this chapter.
+
+\section{Local versus global chain selection}
+
+
+
+
+
+
+
+\pagebreak
+
+
+\debugsep{OLD}
+
+\section{Introduction}
+
+\subsection{Chain length versus chain density}
+\label{genesis:intro:length-vs-density}
+
+%
 Conversely, the density of the fragment of a chain is only meaningful if that
 fragment is long enough. Since the leadership election is a probabilistic
 process, we only expect fragments to contain more slots signed by honest nodes
@@ -75,39 +246,6 @@ in the sense that if we later see a second chain, we can change our mind about
 adopting the first and adopt the second if that second chain is preferred over
 the first.
 
-The Praos chain selection rule (choose the longest chain) was explicitly
-designed for a context in which all nodes in the network are present from the
-very beginning (or somehow had one of the current chains when it joined) and are
-always online. The Praos security analysis \cite{cryptoeprint:2017:573}
-essentially shows that when the honest nodes in the system are all following
-this protocol, they will end up with a common prefix, with disagreement possible
-only about the most recent $k$ blocks. This means that nodes never need to roll
-back past the tip of that common prefix; indeed, they \emph{should} not roll
-back past that point, as this means they might adopt a chain forged by a
-malicious node which is trying to trick them into believing some kind of
-alternative history. This is the reason for the ``no rollback more than $k$
-blocks'' rule in the Praos chain selection rule, as well as the justification
-for the fact that much of the consensus layer is designed around the assumption
-that there exists a maximum rollback distance.
-
-In reality of course new nodes join the system all the time. This is problematic
-for at least two reasons. First, within the consensus layer we don't see a
-candidate chain's \emph{true} length; the length of a candidate we see depends
-on how much of that candidate's chain we have downloaded\footnote{Nodes do
-report their ``true length'', but since we have no way of verifying this
-information until we have seen the entire chain, we can make no use of this
-information for the purpose of chain selection.}. Defining chain
-selection in terms of chain length, where our \emph{perceived} chain length
-depends on what we decide to download, is obviously rather circular.
-
-But the problem is more fundamental than that. Recall that chain
-selection is running in speculative mode: we consider chains as we see them,
-possibly changing our mind later by adopting a different chain. If a new node
-sees a chain constructed by a malicious node and adopts it, \emph{it might be
-stuck}: it is not difficult for an attacker to construct a chain that is longer
-than $k$ blocks long (even if it will be sparser than the honest chain), and
-once a node adopts such a chain, it will not be able to switch to the honest
-chain anymore as this would involve a rollback of more than $k$ blocks.
 
 \begin{figure}[p]
 \hrule
@@ -225,18 +363,7 @@ chain anymore as this would involve a rollback of more than $k$ blocks.
 
 \subsection{Genesis rule}
 
-Any node with non-zero stake can easily construct chains of arbitrary length,
-but such chains will necessarily be sparse. Indeed, as we argued above,
-chains constructed by malicious nodes cannot be denser (on a sufficiently
-long fragment) than the honest chain.
 
-The \emph{Genesis chain selection rule}, designed to cope with new nodes joining
-the network, therefore compares chains on density whenever possible, defaulting
-to comparing chain length only if there aren't enough blocks to do a meaningful
-density comparison. The size of this ``density window'' is a parameter to the
-rule known as $s$; as it turns out, however, we must pick $s$ such that the
-probability of a $k$-common prefix violation within an $s$ sized window is
-neglible:\VerifiedByResearchers{}
 
 \begin{definition}[Genesis window size]
 \label{default-genesis-window}
@@ -266,14 +393,6 @@ strictly \textbf{longer} than our chain.
 \subsection{Conservative mode}
 \label{genesis:intro:conservative}
 
-The rule as defined in \cref{genesis:rule} is problematic for consensus:
-\emph{it no longer imposes a maximum rollback}. We depend on this maximum
-rollback in many ways
-(\cref{consensus:overview:k,storage:components,chainsyncclient:validation,chainsyncclient:forecasting}
-and others), and we will want to \emph{continue} to depend on it. Less
-fundamentally, but nonetheless importantly, it also doesn't fit very well with
-our look-at-the-tip-only approach (\cref{consensus:overview:chainsel}). We will
-therefore treat the genesis chain selection rule as a special case.
 
 Specifically, we will switch from the default speculative chain selection mode
 to a \emph{conservative} chain selection mode. We will see the details of how
