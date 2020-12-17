@@ -1,15 +1,138 @@
 \chapter{Serialisation abstractions}
 \label{serialisation}
 
-TODO: Discuss the various serialisation abstractions we use, and the problem that
-they are solving.
+Some of the various pieces of data that are handled by consensus also need to be
+serialised to a binary format so that they can be:
 
-\section{Nested contexts}
-\label{serialisation:nested-contexts}
+\begin{enumerate}
+\item written/read to/from \emph{storage} (see \cref{storage}) or;
+\item sent/received across the \emph{network} (e.g., headers via the chain sync
+  protocol \cref{chainsyncclient}).
+\end{enumerate}
+
+The two serialisation purposes above have different requirements and are
+independent of each other. For example, when establishing a network connection,
+a version number is negotiated. We can vary the network serialisation format
+depending on the version number, allowing for instance to include some more
+information in the payload. A concrete example of this is that starting from a
+% TODO Can I talk about Byron here?
+certain version, we include the block size in the payload when sending a Byron
+header across the network as the header itself does not contain it. This kind of
+versioning only concerns the network and is independent of the storage layer.
+Hence we define separate abstractions for them, decoupling them from each other.
+
+% TODO use LaTeX command for the acronym?
+For both abstractions, we use the CBOR (Concise Binary Object Representation)
+format. This choice was made for the initial implementation of the Cardano
+blockchain, with which we must maintain binary compatibility.
+
+We will now discuss both serialisation abstractions in more detail.
+
+\section{Serialising for storage}
+\label{serialisation:storage}
+
+The following data is stored on disk (see \cref{storage}):
+
+\begin{itemize}
+\item Blocks
+\item The extended ledger state (\cref{storage:extledgerstate}) which is the
+  combination of:
+  \begin{itemize}
+  \item The header state (\cref{storage:headerstate})
+  \item The ledger state % TODO link?
+  \end{itemize}
+\end{itemize}
+
+We use the following abstraction for encoding things to disk:
+
+\begin{lstlisting}
+class EncodeDisk blk a where
+  encodeDisk :: CodecConfig blk -> a -> Encoding
+
+class DecodeDisk blk a where
+  decodeDisk :: CodecConfig blk -> forall s. Decoder s a
+\end{lstlisting}
+
+\begin{itemize}
+\item These type classes have two type parameters: the block \lstinline!blk!,
+  over which most things are parameterised, and \lstinline!a!, the type to
+  (de)serialise. For example, \lstinline!a! can be the block type itself or the
+  type corresponding to the ledger state.
+\item \lstinline!CodecConfig blk! is a data family that defines the extra
+  configuration needed for (de)serialisation. For example, to deserialise an EBB
+  (\cref{ebbs}), the number of slots per epoch needs to be known statically to
+  compute the slot of the block based on the epoch number, as the serialisation
+  of an EBB does not contain its slot number, but the in-memory representation
+  does. This configuration is kept as small as possible and is ideally empty.
+  % TODO mention EBBs here?
+\item The \lstinline!a -> Encoding! and \lstinline!forall s. Decoder s a! are
+  the types for respectively encoders and decoders of the \lstinline!cborg!
+  library.
+  % TODO link to library?
+\item The encoder and decoder are split in two classes because they are not
+  always \emph{symmetric}: the instantiation of \lstinline!a! in the encoder is
+  not always the same as in the corresponding decoder. This is because blocks
+  are \emph{annotated} with their serialisation. We will discuss this next in
+  \cref{serialisation:storage:annotations}.
+\end{itemize}
+
+\subsection{Annotations}
+\label{serialisation:storage:annotations}
+
+% TODO Can I talk about Byron and Shelley here?
+The following technique is used in the Byron and Shelley ledgers for a number of
+data types like blocks, headers, transactions, \ldots The in-memory representation
+of, for example a block, consists of both the typical fields describing the
+block (header, transactions, \ldots), but also the \emph{serialisation} of the block
+in question. The block is \emph{annotated} with its serialisation.
+
+The principal reason for this is that it is possible that multiple
+serialisations, each which a different hash, correspond to the same logical
+block. For example, a client sending us the block might encode a number using a
+binary type that is wider than necessary (e.g., encoding the number 0 using four
+bytes instead of a single byte). CBOR defines a \emph{canonical format}, we call
+an encoding that is in CBOR's canonical format a \emph{canonical encoding}.
+% TODO link to canonical format?
+
+When after deserialising a block received in a non-canonical encoding, we
+serialise it again, we will end up with a different encoding, i.e., the
+canonical encoding. This means the hash, which is part of the blockchain, is now
+different and can no longer be verified.
+
+For this reason, when deserialising a block, the original, possibly
+non-canonical encoding is retained and used to annotate the block. To compute
+the hash of the block, one can hash the annotated serialisation.
+
+Besides solving the issue with non-canonical encodings, this has a performance
+advantage, as encoding such a block is very cheap, it is just a matter of
+copying the in-memory annotation.
+
+% TODO we rely on it being cheap in a few places, mention that/them?
+
+This means that the decoder must have access to the original encoding, a
+bytestring, to use as the annotation of the block or other type in question.
+Hence the decoder corresponding to the encoder \lstinline!blk -> Encoding! has
+type \lstinline!forall s. Decoder s (ByteString -> blk)!, which is a different
+instantiation of the type \lstinline!a!. The original encoding is then applied
+to the resulting function to obtain the annotated block.
+
+\subsection{Nested contexts}
+\label{serialisation:disk:nested-contexts}
+
 
 TODO: Discuss why we need this abstraction: if we have multiple types of blocks
 in a ledger, each of which with a corresponding header type, then those headers
 will not need a tag differentiating them when they appear \emph{nested} inside
 a block, but \emph{will} need such a tag when we encode them outside that scope,
-for instance when we are transmissting headers as part of the chain sync
+for instance when we are transmitting headers as part of the chain sync
 protocol (\cref{chainsyncclient}).
+
+%% TODO HasBinaryBlockInfo
+
+
+\section{Serialising for network transmission}
+\label{serialisation:network}
+
+
+\subsection{Versioning}
+\label{serialisation:network:versioning}
