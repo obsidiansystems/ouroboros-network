@@ -85,7 +85,7 @@ the final block in the previous epoch.
 
 So far, none of this is particularly problematic to the consensus layer. Having
 multiple types of blocks in a ledger presents some challenges for serialisation
-(\cref{serialisation:storage:nested-contexts}), but does not otherwise affect
+(\cref{serialisation:storage:nested-contents}), but does not otherwise affect
 consensus much: after all, blocks are interpreted by the ledger layer, not by
 the consensus layer. Unfortunately, however, the design of the Byron EBBs has
 odd quirk: an EBB has the same block number as its \emph{predecessor}, and the
