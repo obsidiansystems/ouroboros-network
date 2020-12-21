@@ -48,6 +48,7 @@ import           Ouroboros.Consensus.Util (ShowProxy (..))
 
 import qualified Shelley.Spec.Ledger.API as SL
 import qualified Shelley.Spec.Ledger.LedgerState as SL (RewardAccounts)
+import qualified Shelley.Spec.Ledger.RewardProvenance as SL (RewardProvenance)
 
 import           Ouroboros.Consensus.Shelley.Eras (EraCrypto)
 import           Ouroboros.Consensus.Shelley.Ledger.Block
@@ -85,6 +86,8 @@ data instance Query (ShelleyBlock era) :: Type -> Type where
   GetNonMyopicMemberRewards
     :: Set (Either SL.Coin (SL.Credential 'SL.Staking (EraCrypto era)))
     -> Query (ShelleyBlock era) (NonMyopicMemberRewards (EraCrypto era))
+  GetRewardProvenance
+    :: Query (ShelleyBlock era) (SL.RewardProvenance (EraCrypto era))
   GetCurrentPParams
     :: Query (ShelleyBlock era) (SL.PParams era)
   GetProposedPParamsUpdates
@@ -154,6 +157,8 @@ instance ShelleyBasedEra era => QueryLedger (ShelleyBlock era) where
         GetNonMyopicMemberRewards creds ->
           NonMyopicMemberRewards $
             SL.getNonMyopicMemberRewards globals st creds
+        GetRewardProvenance ->
+          snd $ SL.getRewardInfo globals st
         GetCurrentPParams ->
           getPParams st
         GetProposedPParamsUpdates ->
@@ -206,6 +211,8 @@ instance SameDepIndex (Query (ShelleyBlock era)) where
     | otherwise
     = Nothing
   sameDepIndex (GetNonMyopicMemberRewards _) _
+    = Nothing
+  sameDepIndex GetRewardProvenance _
     = Nothing
   sameDepIndex GetCurrentPParams GetCurrentPParams
     = Just Refl
@@ -267,6 +274,7 @@ instance ShelleyBasedEra era => ShowQuery (Query (ShelleyBlock era)) where
       GetLedgerTip                               -> show
       GetEpochNo                                 -> show
       GetNonMyopicMemberRewards {}               -> show
+      GetRewardProvenance                        -> show
       GetCurrentPParams                          -> show
       GetProposedPParamsUpdates                  -> show
       GetStakeDistribution                       -> show
@@ -285,6 +293,7 @@ querySupportedVersion = \case
     GetLedgerTip                               -> (>= v1)
     GetEpochNo                                 -> (>= v1)
     GetNonMyopicMemberRewards {}               -> (>= v1)
+    GetRewardProvenance                        -> (>= v2)
     GetCurrentPParams                          -> (>= v1)
     GetProposedPParamsUpdates                  -> (>= v1)
     GetStakeDistribution                       -> (>= v1)
@@ -362,6 +371,8 @@ encodeShelleyQuery query = case query of
       CBOR.encodeListLen 1 <> CBOR.encodeWord8 12
     DebugChainDepState ->
       CBOR.encodeListLen 1 <> CBOR.encodeWord8 13
+    GetRewardProvenance ->
+      CBOR.encodeListLen 1 <> CBOR.encodeWord8 14
 
 decodeShelleyQuery ::
      ShelleyBasedEra era
@@ -384,6 +395,7 @@ decodeShelleyQuery = do
       (1, 11) -> return $ SomeSecond GetGenesisConfig
       (1, 12) -> return $ SomeSecond DebugNewEpochState
       (1, 13) -> return $ SomeSecond DebugChainDepState
+      (1, 14) -> return $ SomeSecond GetRewardProvenance
       _       -> fail $
         "decodeShelleyQuery: invalid (len, tag): (" <>
         show len <> ", " <> show tag <> ")"
@@ -406,6 +418,7 @@ encodeShelleyResult query = case query of
     GetGenesisConfig                           -> toCBOR
     DebugNewEpochState                         -> toCBOR
     DebugChainDepState                         -> toCBOR
+    GetRewardProvenance                        -> toCBOR
 
 decodeShelleyResult ::
      ShelleyBasedEra era
@@ -426,3 +439,4 @@ decodeShelleyResult query = case query of
     GetGenesisConfig                           -> fromCBOR
     DebugNewEpochState                         -> fromCBOR
     DebugChainDepState                         -> fromCBOR
+    GetRewardProvenance                        -> fromCBOR
