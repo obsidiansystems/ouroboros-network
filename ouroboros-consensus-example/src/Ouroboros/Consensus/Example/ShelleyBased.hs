@@ -6,7 +6,7 @@
 {-# LANGUAGE TypeApplications      #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE TypeOperators         #-}
-module Ouroboros.Consensus.Cardano.ShelleyBased (
+module Ouroboros.Consensus.Example.ShelleyBased (
     overShelleyBasedLedgerState
   ) where
 
@@ -17,7 +17,7 @@ import           Ouroboros.Consensus.HardFork.Combinator
 import           Ouroboros.Consensus.Shelley.Ledger (ShelleyBlock)
 import           Ouroboros.Consensus.Shelley.Protocol (PraosCrypto)
 import           Ouroboros.Consensus.Shelley.ShelleyBased
-import           Ouroboros.Consensus.Cardano.Block
+import           Ouroboros.Consensus.Example.Block
 
 -- | When the given ledger state corresponds to a Shelley-based era, apply the
 -- given function to it.
@@ -27,19 +27,18 @@ overShelleyBasedLedgerState ::
       => LedgerState (ShelleyBlock era)
       -> LedgerState (ShelleyBlock era)
      )
-  -> LedgerState (CardanoBlock c)
-  -> LedgerState (CardanoBlock c)
+  -> LedgerState (ExampleBlock c)
+  -> LedgerState (ExampleBlock c)
 overShelleyBasedLedgerState f (HardForkLedgerState st) =
     HardForkLedgerState $ hap fs st
   where
     fs :: NP (LedgerState -.-> LedgerState)
-             (CardanoEras c)
-    fs = fn id
-        :* injectShelleyNP
-             reassoc
-             (hcpure
-               (Proxy @(And (HasCrypto c) ShelleyBasedEra))
-               (fn (Comp . f . unComp)))
+             (ExampleEras c)
+    fs = injectShelleyNP
+           reassoc
+           (hcpure
+             (Proxy @(And (HasCrypto c) ShelleyBasedEra))
+             (fn (Comp . f . unComp)))
 
     reassoc ::
          (     LedgerState :.: ShelleyBlock
