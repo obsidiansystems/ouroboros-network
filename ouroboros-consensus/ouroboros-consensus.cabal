@@ -107,6 +107,7 @@ library
                        Ouroboros.Consensus.HardFork.History.Qry
                        Ouroboros.Consensus.HardFork.History.Summary
                        Ouroboros.Consensus.HardFork.History.Util
+                       Ouroboros.Consensus.HardFork.Simple
                        Ouroboros.Consensus.HeaderStateHistory
                        Ouroboros.Consensus.HeaderValidation
                        Ouroboros.Consensus.Ledger.Abstract
@@ -144,6 +145,7 @@ library
                        Ouroboros.Consensus.Node.Run
                        Ouroboros.Consensus.Node.Serialisation
                        Ouroboros.Consensus.Node.Tracers
+                       Ouroboros.Consensus.Protocol
                        Ouroboros.Consensus.Protocol.Abstract
                        Ouroboros.Consensus.Protocol.BFT
                        Ouroboros.Consensus.Protocol.LeaderSchedule
