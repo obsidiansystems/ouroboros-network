@@ -8,6 +8,8 @@ module Ouroboros.Consensus.Example.Block (
     -- * Eras
     -- XXX
     module Ouroboros.Consensus.Example.Eras
+  , ShelleyBasedHardForkEras
+  , ShelleyBasedHardForkBlock
   , ExampleEras
   , ShelleyBasedExampleEras
     -- * Block
@@ -128,15 +130,19 @@ import           Ouroboros.Consensus.Shelley.Ledger (ShelleyBlock)
   The eras of the Example block chain
 -------------------------------------------------------------------------------}
 
+-- | Two eras, both Shelley-based.
+type ShelleyBasedHardForkEras era1 era2 =
+    '[ShelleyBlock era1, ShelleyBlock era2]
+
+type ShelleyBasedHardForkBlock era1 era2 =
+  HardForkBlock (ShelleyBasedHardForkEras era1 era2)
+
 -- | The eras in the Example blockchain.
 --
 -- We parameterise over the crypto used in the post-Byron eras: @c@.
 --
 -- TODO: parameterise ByronBlock over crypto too
-type ExampleEras c =
-  '[ ShelleyBlock (ShelleyEra c)
-   , ShelleyBlock (ExampleEra c)
-   ]
+type ExampleEras c = ShelleyBasedHardForkEras (ShelleyEra c) (ExampleEra c)
 
 type ShelleyBasedExampleEras c =
   '[ ShelleyEra c

@@ -11,26 +11,9 @@ module Ouroboros.Consensus.Example (
   , ProtocolExample
   ) where
 
-import           Data.Kind (Type)
-import           Data.Type.Equality
-
-import           Cardano.Chain.Slotting (EpochSlots)
-
-import           Ouroboros.Consensus.Block
-import           Ouroboros.Consensus.Node.ProtocolInfo
-import           Ouroboros.Consensus.Node.Run
-import           Ouroboros.Consensus.Protocol.Abstract as X
-import           Ouroboros.Consensus.Protocol.PBFT as X
-import           Ouroboros.Consensus.Util
-import           Ouroboros.Consensus.Util.IOLike
-
 import           Ouroboros.Consensus.HardFork.Combinator
-
 import           Ouroboros.Consensus.Shelley.Ledger
-import           Ouroboros.Consensus.Shelley.Node as X
-
 import           Ouroboros.Consensus.Example.Block
-import           Ouroboros.Consensus.Example.Node
 
 {-------------------------------------------------------------------------------
   Supported protocols

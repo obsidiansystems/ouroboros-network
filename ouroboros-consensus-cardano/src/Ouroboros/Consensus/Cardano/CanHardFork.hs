@@ -22,6 +22,7 @@ module Ouroboros.Consensus.Cardano.CanHardFork (
   , ByronPartialLedgerConfig (..)
   , ShelleyPartialLedgerConfig (..)
   , CardanoHardForkConstraints
+  , ShelleyBasedHardForkConstraints
   , ExampleHardForkConstraints
   , forecastAcrossShelley
   , translateChainDepStateAcrossShelley
@@ -74,7 +75,7 @@ import           Ouroboros.Consensus.Shelley.Node ()
 import           Ouroboros.Consensus.Shelley.Protocol
 
 import           Cardano.Ledger.Example
-import           Cardano.Ledger.Example.Translation
+import           Cardano.Ledger.Example.Translation ()
 import           Ouroboros.Consensus.Example.Block
 
 import           Cardano.Ledger.Allegra.Translation ()
@@ -716,10 +717,29 @@ translateTxAllegraToMaryWrapper ::
 translateTxAllegraToMaryWrapper = InjectTx $
     fmap unComp . eitherToMaybe . runExcept . SL.translateEra () . Comp
 
+{-------------------------------------------------------------------------------
+  Translation from Shelley to Example
+-------------------------------------------------------------------------------}
+
+type ShelleyBasedHardForkConstraints era1 era2 =
+  ( ShelleyBasedEra era1
+  , ShelleyBasedEra era2
+  , EraCrypto era1 ~ EraCrypto era2
+  , SL.PreviousEra era2 ~ era1
+
+  , SL.TranslateEra       era2 SL.Tx
+  , SL.TranslateEra       era2 SL.NewEpochState
+  , SL.TranslateEra       era2 SL.ShelleyGenesis
+
+  , SL.TranslationError   era2 SL.NewEpochState  ~ Void
+  , SL.TranslationError   era2 SL.ShelleyGenesis ~ Void
+
+  , SL.TranslationContext era2 ~ ()
+  )
+
 type ExampleHardForkConstraints c =
   ( PraosCrypto c
-  , ShelleyBasedEra (ShelleyEra c)
-  , ShelleyBasedEra (ExampleEra c)
+  , ShelleyBasedHardForkConstraints (ShelleyEra c) (ExampleEra c)
     -- These equalities allow the transition from Byron to Shelley, since
     -- @shelley-spec-ledger@ requires Ed25519 for Byron bootstrap addresses and
     -- the current Byron-to-Shelley translation requires a 224-bit hash for
@@ -729,48 +749,39 @@ type ExampleHardForkConstraints c =
   , DSIGN    c ~ Ed25519DSIGN
   )
 
-instance ExampleHardForkConstraints c => CanHardFork (ExampleEras c) where
+instance ShelleyBasedHardForkConstraints era1 era2
+      => CanHardFork (ShelleyBasedHardForkEras era1 era2) where
   hardForkEraTranslation = EraTranslation {
-      translateLedgerState   =
-          PCons translateLedgerStateShelleyToExampleWrapper
-        $ PNil
-    , translateChainDepState =
-          PCons translateChainDepStateAcrossShelley
-        $ PNil
-    , translateLedgerView    =
-          PCons translateLedgerViewAcrossShelley
-        $ PNil
-    }
-  hardForkChainSel =
-        -- Shelley <-> Example, ...
-        TCons (SelectSameProtocol :* Nil)
-        -- Example <-> ...
-      $ TCons Nil
-      $ TNil
-  hardForkInjectTxs =
-        PCons (ignoringBoth translateTxShelleyToExampleWrapper)
-      $ PNil
+        translateLedgerState   = PCons translateLedgerState                PNil
+      , translateChainDepState = PCons translateChainDepStateAcrossShelley PNil
+      , translateLedgerView    = PCons translateLedgerView                 PNil
+      }
+    where
+      translateLedgerState ::
+           RequiringBoth
+             WrapLedgerConfig
+             (Translate LedgerState)
+             (ShelleyBlock era1)
+             (ShelleyBlock era2)
+      translateLedgerState = ignoringBoth $ Translate $ \_epochNo ->
+          unComp . SL.translateEra' () . Comp
 
-{-------------------------------------------------------------------------------
-  Translation from Shelley to Example
--------------------------------------------------------------------------------}
+      translateLedgerView ::
+           RequiringBoth
+              WrapLedgerConfig
+              (TranslateForecast LedgerState WrapLedgerView)
+              (ShelleyBlock era1)
+              (ShelleyBlock era2)
+      translateLedgerView =
+          RequireBoth $ \(WrapLedgerConfig cfg1) (WrapLedgerConfig cfg2) ->
+            TranslateForecast $ forecastAcrossShelley cfg1 cfg2
 
-translateLedgerStateShelleyToExampleWrapper ::
-     PraosCrypto c
-  => RequiringBoth
-       WrapLedgerConfig
-       (Translate LedgerState)
-       (ShelleyBlock (ShelleyEra c))
-       (ShelleyBlock (ExampleEra c))
-translateLedgerStateShelleyToExampleWrapper =
-    ignoringBoth $
-      Translate $ \_epochNo ->
-        unComp . SL.translateEra' () . Comp
+  hardForkChainSel = TCons (SelectSameProtocol :* Nil) (TCons Nil TNil)
 
-translateTxShelleyToExampleWrapper ::
-     PraosCrypto c
-  => InjectTx
-       (ShelleyBlock (ShelleyEra c))
-       (ShelleyBlock (ExampleEra c))
-translateTxShelleyToExampleWrapper = InjectTx $
-    fmap unComp . eitherToMaybe . runExcept . SL.translateEra () . Comp
+  hardForkInjectTxs = PCons (ignoringBoth (InjectTx translateTx)) PNil
+    where
+      translateTx ::
+           GenTx (ShelleyBlock era1)
+        -> Maybe (GenTx (ShelleyBlock era2))
+      translateTx =
+          fmap unComp . eitherToMaybe . runExcept . SL.translateEra () . Comp

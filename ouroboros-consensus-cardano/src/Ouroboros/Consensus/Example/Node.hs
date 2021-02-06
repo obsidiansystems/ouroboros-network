@@ -28,9 +28,7 @@ module Ouroboros.Consensus.Example.Node (
 import qualified Codec.CBOR.Decoding as CBOR
 import           Codec.CBOR.Encoding (Encoding)
 import qualified Codec.CBOR.Encoding as CBOR
-import           Control.Exception (assert)
 import qualified Data.ByteString.Short as Short
-import           Data.Functor.These (These1 (..))
 import qualified Data.Map.Strict as Map
 import           Data.SOP.Strict hiding (shape, shift)
 import           Data.Word (Word16)
@@ -55,7 +53,6 @@ import           Ouroboros.Consensus.Util.Counting
 import           Ouroboros.Consensus.Util.IOLike
 import           Ouroboros.Consensus.Util.OptNP (OptNP (..))
 import qualified Ouroboros.Consensus.Util.OptNP as OptNP
-import           Ouroboros.Consensus.Util.SOP (Index (..))
 
 import           Ouroboros.Consensus.HardFork.Combinator
 import           Ouroboros.Consensus.HardFork.Combinator.Embed.Nary
@@ -95,7 +92,7 @@ instance ExampleHardForkConstraints c => SerialiseHFC (ExampleEras c) where
 
   reconstructHfcPrefixLen _ = PrefixLen 2
 
-  reconstructHfcNestedCtxt _ prefix blockSize =
+  reconstructHfcNestedCtxt _ prefix _ =
       case Short.index prefix 1 of
         2 -> SomeSecond $ NestedCtxt (NCZ Shelley.CtxtShelley)
         99 -> SomeSecond $ NestedCtxt (NCS (NCZ Shelley.CtxtShelley))
@@ -445,7 +442,7 @@ protocolClientInfoExample
   :: forall c.
      EpochSlots
   -> ProtocolClientInfo (ExampleBlock c)
-protocolClientInfoExample epochSlots = ProtocolClientInfo {
+protocolClientInfoExample _ = ProtocolClientInfo {
       pClientInfoCodecConfig =
         ExampleCodecConfig
           (pClientInfoCodecConfig protocolClientInfoShelley)

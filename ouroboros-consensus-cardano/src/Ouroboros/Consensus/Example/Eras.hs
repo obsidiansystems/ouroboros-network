@@ -4,6 +4,7 @@
 {-# LANGUAGE OverloadedStrings       #-}
 {-# LANGUAGE TypeFamilies            #-}
 {-# LANGUAGE UndecidableSuperClasses #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 module Ouroboros.Consensus.Example.Eras (
     -- * Eras based on the Shelley ledger
     ExampleEra
@@ -19,7 +20,6 @@ module Ouroboros.Consensus.Example.Eras (
 
 import           Cardano.Ledger.Example (ExampleEra)
 
-import           Ouroboros.Consensus.Shelley.Protocol.Crypto (StandardCrypto)
 import           Ouroboros.Consensus.Shelley.Eras
 import qualified Shelley.Spec.Ledger.API as SL
 

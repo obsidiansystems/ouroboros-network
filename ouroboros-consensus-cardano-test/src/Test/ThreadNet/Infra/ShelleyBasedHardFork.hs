@@ -23,39 +23,28 @@ module Test.ThreadNet.Infra.ShelleyBasedHardFork (
   , protocolInfoShelleyBasedHardFork
   ) where
 
-import           Control.Monad.Except (runExcept)
 import qualified Data.Map.Strict as Map
 import           Data.SOP.Strict
-import           Data.Void (Void)
 
 import           Ouroboros.Consensus.Ledger.Basics (LedgerConfig)
 import           Ouroboros.Consensus.Node
 import           Ouroboros.Consensus.Node.NetworkProtocolVersion
-import           Ouroboros.Consensus.TypeFamilyWrappers
-import           Ouroboros.Consensus.Util (eitherToMaybe)
 import           Ouroboros.Consensus.Util.IOLike (IOLike)
 
 import           Ouroboros.Consensus.HardFork.Combinator
 import           Ouroboros.Consensus.HardFork.Combinator.Embed.Binary
 import           Ouroboros.Consensus.HardFork.Combinator.Serialisation
-import qualified Ouroboros.Consensus.HardFork.Combinator.State.Types as HFC
-import qualified Ouroboros.Consensus.HardFork.Combinator.Util.InPairs as InPairs
-import qualified Ouroboros.Consensus.HardFork.Combinator.Util.Tails as Tails
 import qualified Ouroboros.Consensus.HardFork.History as History
 
 import qualified Cardano.Ledger.Era as SL
 import qualified Shelley.Spec.Ledger.API as SL
 
-import           Ouroboros.Consensus.Shelley.Eras
 import           Ouroboros.Consensus.Shelley.Ledger
 import           Ouroboros.Consensus.Shelley.Node
 import           Ouroboros.Consensus.Shelley.Protocol
 
 import           Ouroboros.Consensus.Cardano.CanHardFork
-                     (ShelleyPartialLedgerConfig (..), forecastAcrossShelley,
-                     translateChainDepStateAcrossShelley)
-import           Ouroboros.Consensus.Cardano.Node
-                     (ProtocolParamsTransition (..), TriggerHardFork (..))
+import           Ouroboros.Consensus.Cardano.Node (ProtocolParamsTransition (..))
 
 import           Test.ThreadNet.TxGen
 import           Test.ThreadNet.TxGen.Shelley ()
@@ -114,62 +103,9 @@ pattern ShelleyBasedHardForkNodeToClientVersion1 =
   Consensus instances
 -------------------------------------------------------------------------------}
 
-type ShelleyBasedHardForkConstraints era1 era2 =
-  ( ShelleyBasedEra era1
-  , ShelleyBasedEra era2
-  , EraCrypto era1 ~ EraCrypto era2
-  , SL.PreviousEra era2 ~ era1
-
-  , SL.TranslateEra       era2 SL.Tx
-  , SL.TranslateEra       era2 SL.NewEpochState
-  , SL.TranslateEra       era2 SL.ShelleyGenesis
-
-  , SL.TranslationError   era2 SL.NewEpochState  ~ Void
-  , SL.TranslationError   era2 SL.ShelleyGenesis ~ Void
-
-  , SL.TranslationContext era2 ~ ()
-  )
-
 instance ShelleyBasedHardForkConstraints era1 era2
       => SerialiseHFC (ShelleyBasedHardForkEras era1 era2)
    -- use defaults
-
-instance ShelleyBasedHardForkConstraints era1 era2
-      => CanHardFork (ShelleyBasedHardForkEras era1 era2) where
-  hardForkEraTranslation = EraTranslation {
-        translateLedgerState   = PCons translateLedgerState                PNil
-      , translateChainDepState = PCons translateChainDepStateAcrossShelley PNil
-      , translateLedgerView    = PCons translateLedgerView                 PNil
-      }
-    where
-      translateLedgerState ::
-           InPairs.RequiringBoth
-             WrapLedgerConfig
-             (HFC.Translate LedgerState)
-             (ShelleyBlock era1)
-             (ShelleyBlock era2)
-      translateLedgerState = InPairs.ignoringBoth $ HFC.Translate $ \_epochNo ->
-          unComp . SL.translateEra' () . Comp
-
-      translateLedgerView ::
-           InPairs.RequiringBoth
-              WrapLedgerConfig
-              (HFC.TranslateForecast LedgerState WrapLedgerView)
-              (ShelleyBlock era1)
-              (ShelleyBlock era2)
-      translateLedgerView =
-          InPairs.RequireBoth $ \(WrapLedgerConfig cfg1) (WrapLedgerConfig cfg2) ->
-            HFC.TranslateForecast $ forecastAcrossShelley cfg1 cfg2
-
-  hardForkChainSel = Tails.mk2 SelectSameProtocol
-
-  hardForkInjectTxs = InPairs.mk2 $ InPairs.ignoringBoth (InjectTx translateTx)
-    where
-      translateTx ::
-           GenTx (ShelleyBlock era1)
-        -> Maybe (GenTx (ShelleyBlock era2))
-      translateTx =
-          fmap unComp . eitherToMaybe . runExcept . SL.translateEra () . Comp
 
 instance ShelleyBasedHardForkConstraints era1 era2
       => SupportedNetworkProtocolVersion (ShelleyBasedHardForkBlock era1 era2) where
