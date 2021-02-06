@@ -22,13 +22,8 @@ library
   exposed-modules:
                        Test.Consensus.Example.Examples
                        Test.Consensus.Example.Generators
-                       Test.Consensus.Example.MockCrypto
-
                        Test.ThreadNet.Infra.ShelleyBasedHardFork
                        Test.ThreadNet.Infra.TwoEras
-
-                       Test.ThreadNet.TxGen.Allegra
-                       Test.ThreadNet.TxGen.Example
 
   build-depends:       base
                      , bytestring
@@ -49,6 +44,8 @@ library
                      , tasty-quickcheck
                      , time
 
+                     , cardano-ledger-example-shelley
+                     , cardano-ledger-example-shelley-test
                      , shelley-spec-ledger
                      , shelley-spec-ledger-test
 
@@ -58,6 +55,7 @@ library
                      , ouroboros-consensus-shelley
                      , ouroboros-consensus-shelley-test
                      , ouroboros-consensus-cardano
+                     , ouroboros-consensus-cardano-test
 
   default-language:    Haskell2010
   ghc-options:         -Wall
@@ -77,8 +75,7 @@ test-suite test
   other-modules:
                        Test.Consensus.Example.Golden
                        Test.Consensus.Example.Serialisation
-                       Test.ThreadNet.Example
-                       Test.ThreadNet.ShelleyAllegra
+                       Test.ThreadNet.ShelleyExample
 
   build-depends:       base
                      , bytestring
@@ -98,6 +95,8 @@ test-suite test
                      , tasty-quickcheck
                      , time
 
+                     , cardano-ledger-example-shelley
+                     , cardano-ledger-example-shelley-test
                      , shelley-spec-ledger
                      , shelley-spec-ledger-test
 
@@ -106,8 +105,8 @@ test-suite test
                      , ouroboros-consensus-test
                      , ouroboros-consensus-shelley
                      , ouroboros-consensus-shelley-test
-                     , ouroboros-consensus-example
-                     , ouroboros-consensus-example-test
+                     , ouroboros-consensus-cardano
+                     , ouroboros-consensus-cardano-test
 
   default-language:    Haskell2010
   ghc-options:         -Wall

@@ -14,7 +14,7 @@
 
 {-# OPTIONS_GHC -Wno-orphans #-}
 
-module Test.ThreadNet.ShelleyAllegra (
+module Test.ThreadNet.ShelleyExample (
     tests
   ) where
 
