@@ -11,6 +11,7 @@ module Ouroboros.Consensus.Cardano (
   , ProtocolByron
   , ProtocolShelley
   , ProtocolCardano
+  , ProtocolExample
     -- * Abstract over the various protocols
   , ProtocolParamsByron(..)
   , ProtocolParamsShelley(..)
@@ -79,6 +80,9 @@ type ProtocolCardano = HardForkProtocol '[ ByronBlock
                                          , ShelleyBlock StandardShelley
                                          , ShelleyBlock StandardAllegra
                                          , ShelleyBlock StandardMary
+                                         ]
+type ProtocolExample = HardForkProtocol '[ ShelleyBlock StandardShelley
+                                         , ShelleyBlock Example.StandardExample
                                          ]
 
 {-------------------------------------------------------------------------------
@@ -219,8 +223,7 @@ data ProtocolClient blk p where
          ProtocolCardano
 
   ProtocolClientExample
-    :: EpochSlots
-    -> ProtocolClient
+    :: ProtocolClient
          (Example.ExampleBlock StandardCrypto)
          Example.ProtocolExample
 
@@ -249,5 +252,5 @@ protocolClientInfo ProtocolClientShelley =
 protocolClientInfo (ProtocolClientCardano epochSlots) =
     protocolClientInfoCardano epochSlots
 
-protocolClientInfo (ProtocolClientExample epochSlots) =
-    protocolClientInfoExample epochSlots
+protocolClientInfo ProtocolClientExample =
+    protocolClientInfoExample
