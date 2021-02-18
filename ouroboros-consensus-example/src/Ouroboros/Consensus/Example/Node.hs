@@ -34,11 +34,10 @@ import           Data.SOP.Strict hiding (shape, shift)
 import           Data.Word (Word16)
 
 import           Cardano.Binary (DecoderError (..), enforceSize)
+import           Cardano.Chain.Slotting (EpochSlots)
 import           Cardano.Prelude (cborError)
 
 import           Ouroboros.Consensus.Block
-import           Ouroboros.Consensus.Cardano.CanHardFork
-import           Ouroboros.Consensus.Cardano.Node (ProtocolParamsTransition (..))
 import           Ouroboros.Consensus.Config
 import qualified Ouroboros.Consensus.HardFork.History as History
 import           Ouroboros.Consensus.HeaderValidation
@@ -69,11 +68,14 @@ import qualified Ouroboros.Consensus.Shelley.Protocol as Shelley
 import qualified Shelley.Spec.Ledger.API as SL
 
 import           Ouroboros.Consensus.Example.Block
+import           Ouroboros.Consensus.Example.CanHardFork
 import           Ouroboros.Consensus.Example.ShelleyBased
 
 {-------------------------------------------------------------------------------
   SerialiseHFC
 -------------------------------------------------------------------------------}
+
+instance ShelleyBasedEra era => SerialiseConstraintsHFC (ShelleyBlock era)
 
 instance ExampleHardForkConstraints c => SerialiseHFC (ExampleEras c) where
   encodeDiskHfcBlock (ExampleCodecConfig ccfgShelley ccfgExample) = \case
@@ -184,6 +186,14 @@ instance ExampleHardForkConstraints c
 {-------------------------------------------------------------------------------
   ProtocolInfo
 -------------------------------------------------------------------------------}
+
+-- | Parameters needed to transition between two eras.
+--
+-- The two eras are phantom type parameters of this type to avoid mixing up
+-- multiple 'ProtocolParamsTransition's
+data ProtocolParamsTransition eraFrom eraTo = ProtocolParamsTransition {
+      transitionTrigger    :: TriggerHardFork
+    }
 
 -- | Parameters needed to run Shelley
 data ProtocolParamsExample = ProtocolParamsExample {
@@ -438,8 +448,7 @@ protocolInfoExample ProtocolParamsShelleyBased {
         reassoc = injectShelleyOptNP unComp . OptNP.fromNonEmptyNP
 
 protocolClientInfoExample
-  :: forall c.
-     ProtocolClientInfo (ExampleBlock c)
+  :: forall c.  ProtocolClientInfo (ExampleBlock c)
 protocolClientInfoExample = ProtocolClientInfo {
       pClientInfoCodecConfig =
         ExampleCodecConfig
