@@ -25,6 +25,7 @@ module Ouroboros.Consensus.Cardano (
   , module X
     -- * Client support for nodes running a protocol
   , ProtocolClient(..)
+  , RunProtocol(..)
   , RunProtocolClient(..)
   ) where
 

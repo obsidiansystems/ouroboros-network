@@ -14,6 +14,7 @@ module Ouroboros.Consensus.Example (
     ExampleBlock
   , ProtocolExample
   , Protocol(..)
+  , RunProtocol (..)
   , RunProtocolClient(..)
   ) where
 
