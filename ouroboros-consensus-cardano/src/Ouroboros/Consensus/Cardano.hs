@@ -25,6 +25,7 @@ module Ouroboros.Consensus.Cardano (
   , module X
     -- * Client support for nodes running a protocol
   , ProtocolClient(..)
+  , RunProtocolClient(..)
   ) where
 
 import           Cardano.Chain.Slotting (EpochSlots)

@@ -14,6 +14,7 @@ module Ouroboros.Consensus.Example (
     ExampleBlock
   , ProtocolExample
   , Protocol(..)
+  , RunProtocolClient(..)
   ) where
 
 import           Ouroboros.Consensus.Util.IOLike
