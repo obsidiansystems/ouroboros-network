@@ -1,8 +1,12 @@
-{-# LANGUAGE DataKinds           #-}
-{-# LANGUAGE GADTs               #-}
-{-# LANGUAGE KindSignatures      #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeOperators       #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE TypeSynonymInstances #-}
 
 module Ouroboros.Consensus.Cardano (
     -- * The block type of the Cardano block chain
@@ -18,22 +22,10 @@ module Ouroboros.Consensus.Cardano (
   , ProtocolParamsMary(..)
   , ProtocolParamsTransition(..)
   , Protocol(..)
-  , verifyProtocol
-    -- * Data required to run a protocol
-  , protocolInfo
-    -- * Evidence that we can run all the supported protocols
-  , runProtocol
   , module X
-
     -- * Client support for nodes running a protocol
   , ProtocolClient(..)
-  , protocolClientInfo
-  , runProtocolClient
-  , verifyProtocolClient
   ) where
-
-import           Data.Kind (Type)
-import           Data.Type.Equality
 
 import           Cardano.Chain.Slotting (EpochSlots)
 
@@ -42,7 +34,6 @@ import           Ouroboros.Consensus.Node.ProtocolInfo
 import           Ouroboros.Consensus.Node.Run
 import           Ouroboros.Consensus.Protocol.Abstract as X
 import           Ouroboros.Consensus.Protocol.PBFT as X
-import           Ouroboros.Consensus.Util
 import           Ouroboros.Consensus.Util.IOLike
 
 import           Ouroboros.Consensus.HardFork.Combinator
@@ -76,63 +67,34 @@ type ProtocolCardano = HardForkProtocol '[ ByronBlock
                                          , ShelleyBlock StandardMary
                                          ]
 
-{-------------------------------------------------------------------------------
-  Abstract over the various protocols
--------------------------------------------------------------------------------}
+class (p ~ BlockProtocol blk, RunNode blk, IOLike m) => Protocol m blk p where
+  data RunProtocol m blk p
+  protocolInfo :: RunProtocol m blk p -> ProtocolInfo m blk
 
--- | Consensus protocol to use
-data Protocol (m :: Type -> Type) blk p where
-  -- | Run PBFT against the Byron ledger
-  ProtocolByron
-    :: ProtocolParamsByron
-    -> Protocol m ByronBlockHFC ProtocolByron
+-- | Run PBFT against the Byron ledger
+instance IOLike m => Protocol m ByronBlockHFC ProtocolByron where
+  data RunProtocol m ByronBlockHFC ProtocolByron = RunProtocolByron ProtocolParamsByron
+  protocolInfo (RunProtocolByron params) = inject $ protocolInfoByron params
 
-  -- | Run TPraos against the Shelley ledger
-  ProtocolShelley
-    :: ProtocolParamsShelleyBased StandardShelley
-    -> ProtocolParamsShelley
-    -> Protocol m (ShelleyBlockHFC StandardShelley) ProtocolShelley
-
-  -- | Run the protocols of /the/ Cardano block
-  --
-  -- WARNING: only a single set of Shelley credentials is allowed when used for
-  -- mainnet. Testnets allow multiple Shelley credentials.
-  ProtocolCardano
-    :: ProtocolParamsByron
-    -> ProtocolParamsShelleyBased StandardShelley
-    -> ProtocolParamsShelley
-    -> ProtocolParamsAllegra
-    -> ProtocolParamsMary
-    -> ProtocolParamsTransition
-         ByronBlock
-         (ShelleyBlock StandardShelley)
-    -> ProtocolParamsTransition
-         (ShelleyBlock StandardShelley)
-         (ShelleyBlock StandardAllegra)
-    -> ProtocolParamsTransition
-         (ShelleyBlock StandardAllegra)
-         (ShelleyBlock StandardMary)
-    -> Protocol m (CardanoBlock StandardCrypto) ProtocolCardano
-
-verifyProtocol :: Protocol m blk p -> (p :~: BlockProtocol blk)
-verifyProtocol ProtocolByron{}   = Refl
-verifyProtocol ProtocolShelley{} = Refl
-verifyProtocol ProtocolCardano{} = Refl
-
-{-------------------------------------------------------------------------------
-  Data required to run a protocol
--------------------------------------------------------------------------------}
-
--- | Data required to run the selected protocol
-protocolInfo :: forall m blk p. IOLike m
-             => Protocol m blk p -> ProtocolInfo m blk
-protocolInfo (ProtocolByron params) =
-    inject $ protocolInfoByron params
-
-protocolInfo (ProtocolShelley paramsShelleyBased paramsShelley) =
+-- | Run TPraos against the Shelley ledger
+instance IOLike m => Protocol m (ShelleyBlockHFC StandardShelley) ProtocolShelley where
+  data RunProtocol m (ShelleyBlockHFC StandardShelley) ProtocolShelley = RunProtocolShelley
+    (ProtocolParamsShelleyBased StandardShelley)
+    (ProtocolParamsShelley)
+  protocolInfo (RunProtocolShelley paramsShelleyBased paramsShelley) =
     inject $ protocolInfoShelley paramsShelleyBased paramsShelley
 
-protocolInfo (ProtocolCardano
+instance IOLike m => Protocol m (CardanoBlock StandardCrypto) ProtocolCardano where
+  data RunProtocol m (CardanoBlock StandardCrypto) ProtocolCardano = RunProtocolCardano
+    ProtocolParamsByron
+    (ProtocolParamsShelleyBased StandardShelley)
+    ProtocolParamsShelley
+    ProtocolParamsAllegra
+    ProtocolParamsMary
+    (ProtocolParamsTransition ByronBlock (ShelleyBlock StandardShelley))
+    (ProtocolParamsTransition (ShelleyBlock StandardShelley) (ShelleyBlock StandardAllegra))
+    (ProtocolParamsTransition (ShelleyBlock StandardAllegra) (ShelleyBlock StandardMary))
+  protocolInfo (RunProtocolCardano
                paramsByron
                paramsShelleyBased
                paramsShelley
@@ -151,61 +113,29 @@ protocolInfo (ProtocolCardano
       paramsShelleyAllegra
       paramsAllegraMary
 
-{-------------------------------------------------------------------------------
-  Evidence that we can run all the supported protocols
--------------------------------------------------------------------------------}
-
-runProtocol :: Protocol m blk p -> Dict (RunNode blk)
-runProtocol ProtocolByron{}   = Dict
-runProtocol ProtocolShelley{} = Dict
-runProtocol ProtocolCardano{} = Dict
-
-{-------------------------------------------------------------------------------
-  Client support for the protocols: what you need as a client of the node
--------------------------------------------------------------------------------}
-
 -- | Node client support for each consensus protocol.
 --
 -- This is like 'Protocol' but for clients of the node, so with less onerous
 -- requirements than to run a node.
 --
-data ProtocolClient blk p where
-  ProtocolClientByron
-    :: EpochSlots
-    -> ProtocolClient
-         ByronBlockHFC
-         ProtocolByron
+class (p ~ BlockProtocol blk, RunNode blk) => ProtocolClient blk p where
+  data RunProtocolClient blk p
+  protocolClientInfo :: RunProtocolClient blk p -> ProtocolClientInfo blk
 
-  ProtocolClientShelley
-    :: ProtocolClient
-         (ShelleyBlockHFC StandardShelley)
-         ProtocolShelley
-
-  ProtocolClientCardano
-    :: EpochSlots
-    -> ProtocolClient
-         (CardanoBlock StandardCrypto)
-         ProtocolCardano
-
--- | Sanity check that we have the right type combinations
-verifyProtocolClient :: ProtocolClient blk p -> (p :~: BlockProtocol blk)
-verifyProtocolClient ProtocolClientByron{}   = Refl
-verifyProtocolClient ProtocolClientShelley{} = Refl
-verifyProtocolClient ProtocolClientCardano{} = Refl
-
--- | Sanity check that we have the right class instances available
-runProtocolClient :: ProtocolClient blk p -> Dict (RunNode blk)
-runProtocolClient ProtocolClientByron{}   = Dict
-runProtocolClient ProtocolClientShelley{} = Dict
-runProtocolClient ProtocolClientCardano{} = Dict
-
--- | Data required by clients of a node running the specified protocol.
-protocolClientInfo :: ProtocolClient blk p -> ProtocolClientInfo blk
-protocolClientInfo (ProtocolClientByron epochSlots) =
+instance ProtocolClient ByronBlockHFC ProtocolByron where
+  data RunProtocolClient ByronBlockHFC ProtocolByron =
+    RunProtocolClientByron EpochSlots
+  protocolClientInfo (RunProtocolClientByron epochSlots) =
     inject $ protocolClientInfoByron epochSlots
 
-protocolClientInfo ProtocolClientShelley =
+instance ProtocolClient (ShelleyBlockHFC StandardShelley) ProtocolShelley where
+  data RunProtocolClient (ShelleyBlockHFC StandardShelley) ProtocolShelley =
+    RunProtocolClientShelley
+  protocolClientInfo RunProtocolClientShelley =
     inject $ protocolClientInfoShelley
 
-protocolClientInfo (ProtocolClientCardano epochSlots) =
+instance ProtocolClient (CardanoBlock StandardCrypto) ProtocolCardano where
+  data RunProtocolClient (CardanoBlock StandardCrypto) ProtocolCardano =
+    RunProtocolClientCardano EpochSlots
+  protocolClientInfo (RunProtocolClientCardano epochSlots) =
     protocolClientInfoCardano epochSlots
