@@ -1,12 +1,12 @@
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE DataKinds             #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE GADTs                 #-}
+{-# LANGUAGE KindSignatures        #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE TypeOperators         #-}
+{-# LANGUAGE TypeSynonymInstances  #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Ouroboros.Consensus.Example (
@@ -20,7 +20,8 @@ module Ouroboros.Consensus.Example (
 
 import           Ouroboros.Consensus.Util.IOLike
 
-import           Ouroboros.Consensus.Cardano (Protocol(..), ProtocolClient(..))
+import           Ouroboros.Consensus.Cardano (Protocol (..),
+                     ProtocolClient (..))
 
 import           Ouroboros.Consensus.HardFork.Combinator
 

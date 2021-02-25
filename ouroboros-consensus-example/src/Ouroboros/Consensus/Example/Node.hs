@@ -95,9 +95,9 @@ instance ExampleHardForkConstraints c => SerialiseHFC (ExampleEras c) where
 
   reconstructHfcNestedCtxt _ prefix _ =
       case Short.index prefix 1 of
-        2 -> SomeSecond $ NestedCtxt (NCZ Shelley.CtxtShelley)
+        2  -> SomeSecond $ NestedCtxt (NCZ Shelley.CtxtShelley)
         99 -> SomeSecond $ NestedCtxt (NCS (NCZ Shelley.CtxtShelley))
-        _ -> error $ "ExampleBlock: invalid prefix " <> show prefix
+        _  -> error $ "ExampleBlock: invalid prefix " <> show prefix
 
   getHfcBinaryBlockInfo = \case
       -- For Shelley and the later eras, we need to account for the two extra

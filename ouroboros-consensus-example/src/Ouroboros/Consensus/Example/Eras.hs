@@ -19,8 +19,8 @@ module Ouroboros.Consensus.Example.Eras (
 
 import           Cardano.Ledger.Example (ExampleEra)
 
-import           Ouroboros.Consensus.Shelley.Protocol.Crypto (StandardCrypto)
 import           Ouroboros.Consensus.Shelley.Eras
+import           Ouroboros.Consensus.Shelley.Protocol.Crypto (StandardCrypto)
 import qualified Shelley.Spec.Ledger.API as SL
 
 {-------------------------------------------------------------------------------
