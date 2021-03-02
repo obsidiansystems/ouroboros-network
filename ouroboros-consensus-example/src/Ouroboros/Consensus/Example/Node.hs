@@ -34,7 +34,6 @@ import           Data.SOP.Strict hiding (shape, shift)
 import           Data.Word (Word16)
 
 import           Cardano.Binary (DecoderError (..), enforceSize)
-import           Cardano.Chain.Slotting (EpochSlots)
 import           Cardano.Prelude (cborError)
 
 import           Ouroboros.Consensus.Block

@@ -25,32 +25,15 @@ module Ouroboros.Consensus.Example.CanHardFork (
   , translateChainDepStateAcrossShelley
   ) where
 
-import           Control.Monad
-import           Control.Monad.Except (Except, runExcept, throwError)
-import qualified Data.Map.Strict as Map
-import           Data.Maybe (listToMaybe, mapMaybe)
-import           Data.Proxy
+import           Control.Monad.Except (runExcept)
 import           Data.SOP.Strict ((:.:) (..), NP (..), unComp)
-import           Data.Void (Void)
-import           Data.Word
-import           GHC.Generics (Generic)
-import           NoThunks.Class (NoThunks)
 
 import           Cardano.Crypto.DSIGN (Ed25519DSIGN)
 import           Cardano.Crypto.Hash.Blake2b (Blake2b_224, Blake2b_256)
 
-import qualified Cardano.Chain.Common as CC
-import qualified Cardano.Chain.Genesis as CC.Genesis
-import qualified Cardano.Chain.Update as CC.Update
-
-import           Ouroboros.Consensus.Block
-import           Ouroboros.Consensus.Forecast
-import           Ouroboros.Consensus.HardFork.History (Bound (boundSlot),
-                     addSlots)
 import           Ouroboros.Consensus.Ledger.Abstract
 import           Ouroboros.Consensus.TypeFamilyWrappers
 import           Ouroboros.Consensus.Util (eitherToMaybe)
-import           Ouroboros.Consensus.Util.RedundantConstraints
 
 import           Ouroboros.Consensus.HardFork.Combinator
 import           Ouroboros.Consensus.HardFork.Combinator.State.Types
@@ -58,22 +41,15 @@ import           Ouroboros.Consensus.HardFork.Combinator.Util.InPairs
                      (RequiringBoth (..), ignoringBoth)
 import           Ouroboros.Consensus.HardFork.Combinator.Util.Tails (Tails (..))
 
-import           Ouroboros.Consensus.Protocol.PBFT (PBft, PBftCrypto)
-import           Ouroboros.Consensus.Protocol.PBFT.State (PBftState)
-import qualified Ouroboros.Consensus.Protocol.PBFT.State as PBftState
-
 import           Ouroboros.Consensus.Cardano.CanHardFork
 
 import           Ouroboros.Consensus.Shelley.Ledger
-import qualified Ouroboros.Consensus.Shelley.Ledger.Inspect as Shelley.Inspect
 import           Ouroboros.Consensus.Shelley.Node ()
 import           Ouroboros.Consensus.Shelley.Protocol
 
 import           Cardano.Ledger.Crypto (ADDRHASH, DSIGN, HASH)
 import qualified Cardano.Ledger.Era as SL
-import           Cardano.Ledger.Example
-import           Cardano.Ledger.Example.Translation
-import qualified Shelley.Spec.Ledger.API as SL
+import           Cardano.Ledger.Example.Translation ()
 
 import           Ouroboros.Consensus.Example.Block
 
