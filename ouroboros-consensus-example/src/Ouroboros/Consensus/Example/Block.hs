@@ -130,9 +130,7 @@ import           Ouroboros.Consensus.Shelley.Ledger (ShelleyBlock)
 
 -- | The eras in the Example blockchain.
 --
--- We parameterise over the crypto used in the post-Byron eras: @c@.
---
--- TODO: parameterise ByronBlock over crypto too
+-- We parameterise over the crypto: @c@.
 type ExampleEras c =
   '[ ShelleyBlock (ShelleyEra c)
    , ShelleyBlock (ExampleEra c)
@@ -150,7 +148,7 @@ type ShelleyBasedExampleEras c =
 -- | /The/ Example block.
 --
 -- Thanks to the pattern synonyms, you can treat this as a sum type with
--- constructors 'BlockByron' and 'BlockShelley'.
+-- constructors 'BlockShelley' and 'BlockExample'.
 --
 -- > f :: ExampleBlock c -> _
 -- > f (BlockShelley s) = _
@@ -220,7 +218,7 @@ pattern GenTxIdExample txid =
 -- | An error resulting from applying a 'ExampleGenTx' to the ledger.
 --
 -- Thanks to the pattern synonyms, you can treat this as a sum type with
--- constructors 'ApplyTxByronErr', 'ApplyTxErrShelley', and
+-- constructors 'ApplyTxErrShelley', 'ApplyTxErrExample', and
 -- 'ApplyTxErrWrongEra'.
 --
 -- > toText :: ExampleApplyTxErr c -> Text
@@ -372,7 +370,7 @@ pattern QueryIfCurrentExample q = QueryIfCurrent (QS (QZ q))
 -- independent from where the tip of the ledger is.
 --
 -- For example, to ask for the start of the Shelley era (whether the tip of the
--- ledger is in the Byron, Shelley, ... era), use:
+-- ledger is in the Shelley, Example, ... era), use:
 --
 -- > QueryAnytimeShelley EraStart
 --
@@ -385,7 +383,7 @@ pattern QueryAnytimeShelley q = QueryAnytime q (EraIndex (Z (K ())))
 -- independent from where the tip of the ledger is.
 --
 -- For example, to ask for the start of the Shelley era (whether the tip of the
--- ledger is in the Byron, Shelley, ... era), use:
+-- ledger is in the Shelley, Example, ... era), use:
 --
 -- > QueryAnytimeShelley EraStart
 --
@@ -447,7 +445,7 @@ pattern ExampleCodecConfig cfgShelley cfgExample =
 -- | The 'BlockConfig' for 'ExampleBlock'.
 --
 -- Thanks to the pattern synonyms, you can treat this as the product of
--- the Byron, Shelley, ... 'BlockConfig's.
+-- the Shelley, Example, ... 'BlockConfig's.
 type ExampleBlockConfig c = BlockConfig (ExampleBlock c)
 
 pattern ExampleBlockConfig
@@ -472,7 +470,7 @@ pattern ExampleBlockConfig cfgShelley cfgExample =
 -- | The 'StorageConfig' for 'ExampleBlock'.
 --
 -- Thanks to the pattern synonyms, you can treat this as the product of
--- the Byron, Shelley, ... 'StorageConfig's.
+-- the Shelley, Example, ... 'StorageConfig's.
 type ExampleStorageConfig c = StorageConfig (ExampleBlock c)
 
 pattern ExampleStorageConfig
@@ -497,7 +495,7 @@ pattern ExampleStorageConfig cfgShelley cfgExample =
 -- | The 'ConsensusConfig' for 'ExampleBlock'.
 --
 -- Thanks to the pattern synonyms, you can treat this as the product of the
--- Byron, Shelley, ... 'PartialConsensusConfig's.
+-- Shelley, Example, ... 'PartialConsensusConfig's.
 --
 -- NOTE: not 'ConsensusConfig', but 'PartialConsensusConfig'.
 type ExampleConsensusConfig c =
@@ -525,7 +523,7 @@ pattern ExampleConsensusConfig cfgShelley cfgExample <-
 -- | The 'LedgerConfig' for 'ExampleBlock'.
 --
 -- Thanks to the pattern synonyms, you can treat this as the product of the
--- Byron, Shelley, ... 'PartialLedgerConfig's.
+-- Shelley, Example, ... 'PartialLedgerConfig's.
 --
 -- NOTE: not 'LedgerConfig', but 'PartialLedgerConfig'.
 type ExampleLedgerConfig c = HardForkLedgerConfig (ExampleEras c)

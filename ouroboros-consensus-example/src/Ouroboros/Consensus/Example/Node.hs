@@ -202,7 +202,7 @@ data ProtocolParamsExample = ProtocolParamsExample {
 -- | Create a 'ProtocolInfo' for 'ExampleBlock'
 --
 -- NOTE: the initial staking and funds in the 'ShelleyGenesis' are ignored,
--- /unless/ configured to skip the Byron era and hard fork to Shelley or a later
+-- /unless/ configured to skip the Shelley era and hard fork to Example
 -- era from the start using @TriggerHardForkAtEpoch 0@ for testing purposes.
 --
 -- PRECONDITION: only a single set of Shelley credentials is allowed when used
@@ -343,8 +343,7 @@ protocolInfoExample ProtocolParamsShelleyBased {
             (Shelley.ShelleyStorageConfig tpraosSlotsPerKESPeriod k)
       }
 
-    -- When the initial ledger state is not in the Byron era, register the
-    -- initial staking and initial funds (if provided in the genesis config) in
+    -- Register the initial staking and initial funds (if provided in the genesis config) in
     -- the ledger state.
     initExtLedgerStateExample :: ExtLedgerState (ExampleBlock c)
     initExtLedgerStateExample = ExtLedgerState {
@@ -421,13 +420,6 @@ protocolInfoExample ProtocolParamsShelleyBased {
     -- In case there are multiple credentials for Shelley, which is only done
     -- for testing/benchmarking purposes, we'll have a separate thread for each
     -- of them.
-    --
-    -- If Byron credentials are passed, we merge them with the Shelley
-    -- credentials if possible, so that we only have a single thread running in
-    -- the case we have Byron credentials and a single set of Shelley
-    -- credentials. If there are multiple Shelley credentials, we merge the
-    -- Byron credentials with the first Shelley one but still have separate
-    -- threads for the remaining Shelley ones.
     blockForging :: m [BlockForging m (ExampleBlock c)]
     blockForging = do
         shelleyBased :: [ OptNP 'False (BlockForging m) (ExampleEras c) ] <- blockForgingShelleyBased
