@@ -28,9 +28,6 @@ module Ouroboros.Consensus.Example.CanHardFork (
 import           Control.Monad.Except (runExcept)
 import           Data.SOP.Strict ((:.:) (..), NP (..), unComp)
 
-import           Cardano.Crypto.DSIGN (Ed25519DSIGN)
-import           Cardano.Crypto.Hash.Blake2b (Blake2b_224, Blake2b_256)
-
 import           Ouroboros.Consensus.Ledger.Abstract
 import           Ouroboros.Consensus.TypeFamilyWrappers
 import           Ouroboros.Consensus.Util (eitherToMaybe)
@@ -47,7 +44,6 @@ import           Ouroboros.Consensus.Shelley.Ledger
 import           Ouroboros.Consensus.Shelley.Node ()
 import           Ouroboros.Consensus.Shelley.Protocol
 
-import           Cardano.Ledger.Crypto (ADDRHASH, DSIGN, HASH)
 import qualified Cardano.Ledger.Era as SL
 import           Cardano.Ledger.Example.Translation ()
 
@@ -61,13 +57,6 @@ type ExampleHardForkConstraints c =
   ( PraosCrypto c
   , ShelleyBasedEra (ShelleyEra c)
   , ShelleyBasedEra (ExampleEra c)
-    -- These equalities allow the transition from Byron to Shelley, since
-    -- @shelley-spec-ledger@ requires Ed25519 for Byron bootstrap addresses and
-    -- the current Byron-to-Shelley translation requires a 224-bit hash for
-    -- address and a 256-bit hash for header hashes.
-  , HASH     c ~ Blake2b_256
-  , ADDRHASH c ~ Blake2b_224
-  , DSIGN    c ~ Ed25519DSIGN
   )
 
 instance ExampleHardForkConstraints c => CanHardFork (ExampleEras c) where
