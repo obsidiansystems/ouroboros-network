@@ -31,6 +31,7 @@ library
                        Ouroboros.Consensus.Example.Condense
                        Ouroboros.Consensus.Example.CanHardFork
                        Ouroboros.Consensus.Example.Node
+                       Ouroboros.Consensus.Example.ShelleyBased
 
   build-depends:       base              >=4.9   && <4.15
                      , bytestring        >=0.10  && <0.11
