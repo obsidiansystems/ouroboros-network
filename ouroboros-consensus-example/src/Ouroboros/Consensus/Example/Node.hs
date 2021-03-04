@@ -64,11 +64,11 @@ import           Ouroboros.Consensus.Shelley.Ledger.NetworkProtocolVersion
 import           Ouroboros.Consensus.Shelley.Node
 import           Ouroboros.Consensus.Shelley.Protocol (TPraosParams (..))
 import qualified Ouroboros.Consensus.Shelley.Protocol as Shelley
+import           Ouroboros.Consensus.Shelley.ShelleyBased
 import qualified Shelley.Spec.Ledger.API as SL
 
 import           Ouroboros.Consensus.Example.Block
 import           Ouroboros.Consensus.Example.CanHardFork
-import           Ouroboros.Consensus.Example.ShelleyBased
 
 {-------------------------------------------------------------------------------
   SerialiseHFC

@@ -1,3 +1,4 @@
+{-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -6,7 +7,7 @@
 {-# LANGUAGE TypeApplications      #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE TypeOperators         #-}
-module Ouroboros.Consensus.Cardano.ShelleyBased (
+module Ouroboros.Consensus.Shelley.ShelleyBased (
     -- * Injection from Shelley-based eras into the Cardano eras
     InjectShelley
   , injectShelleyNP
@@ -24,34 +25,33 @@ import           Ouroboros.Consensus.HardFork.Combinator
 
 import           Ouroboros.Consensus.Shelley.Ledger (ShelleyBlock)
 import           Ouroboros.Consensus.Shelley.Protocol (PraosCrypto)
-
-import           Ouroboros.Consensus.Cardano.Block
+import           Ouroboros.Consensus.Shelley.Eras (EraCrypto, ShelleyBasedEra)
 
 {-------------------------------------------------------------------------------
-  Injection from Shelley-based eras into the Cardano eras
+  Injection from Shelley-based eras into consensus mode eras
 -------------------------------------------------------------------------------}
 
--- | Witness the relation between the Cardano eras and the Shelley-based eras.
-class    cardanoEra ~ ShelleyBlock shelleyEra => InjectShelley shelleyEra cardanoEra
-instance cardanoEra ~ ShelleyBlock shelleyEra => InjectShelley shelleyEra cardanoEra
+-- | Witness the relation between consensus mode (e.g. Cardano) eras and the Shelley-based eras.
+class    consensusModeEra ~ ShelleyBlock shelleyEra => InjectShelley shelleyEra consensusModeEra
+instance consensusModeEra ~ ShelleyBlock shelleyEra => InjectShelley shelleyEra consensusModeEra
 
 injectShelleyNP ::
-     AllZip InjectShelley shelleyEras cardanoEras
-  => (   forall shelleyEra cardanoEra.
-         InjectShelley shelleyEra cardanoEra
-      => f shelleyEra -> g cardanoEra
+     AllZip InjectShelley shelleyEras consensusModeEras
+  => (   forall shelleyEra consensusModeEra.
+         InjectShelley shelleyEra consensusModeEra
+      => f shelleyEra -> g consensusModeEra
      )
-  -> NP f shelleyEras -> NP g cardanoEras
+  -> NP f shelleyEras -> NP g consensusModeEras
 injectShelleyNP _ Nil       = Nil
 injectShelleyNP f (x :* xs) = f x :* injectShelleyNP f xs
 
 injectShelleyOptNP ::
-     AllZip InjectShelley shelleyEras cardanoEras
-  => (   forall shelleyEra cardanoEra.
-         InjectShelley shelleyEra cardanoEra
-      => f shelleyEra -> g cardanoEra
+     AllZip InjectShelley shelleyEras consensusModeEras
+  => (   forall shelleyEra consensusModeEra.
+         InjectShelley shelleyEra consensusModeEra
+      => f shelleyEra -> g consensusModeEra
      )
-  -> OptNP empty f shelleyEras -> OptNP empty g cardanoEras
+  -> OptNP empty f shelleyEras -> OptNP empty g consensusModeEras
 injectShelleyOptNP _ OptNil         = OptNil
 injectShelleyOptNP f (OptSkip   xs) = OptSkip (injectShelleyOptNP f xs)
 injectShelleyOptNP f (OptCons x xs) = OptCons (f x) (injectShelleyOptNP f xs)
@@ -69,18 +69,16 @@ instance EraCrypto era ~ c => HasCrypto c era
 -- | When the given ledger state corresponds to a Shelley-based era, apply the
 -- given function to it.
 overShelleyBasedLedgerState ::
-     forall c. PraosCrypto c
+     forall c (block :: * -> *). PraosCrypto c
   => (   forall era. (EraCrypto era ~ c, ShelleyBasedEra era)
       => LedgerState (ShelleyBlock era)
       -> LedgerState (ShelleyBlock era)
      )
-  -> LedgerState (CardanoBlock c)
-  -> LedgerState (CardanoBlock c)
+  -> LedgerState (block c)
+  -> LedgerState (block c)
 overShelleyBasedLedgerState f (HardForkLedgerState st) =
     HardForkLedgerState $ hap fs st
   where
-    fs :: NP (LedgerState -.-> LedgerState)
-             (CardanoEras c)
     fs = fn id
         :* injectShelleyNP
              reassoc
