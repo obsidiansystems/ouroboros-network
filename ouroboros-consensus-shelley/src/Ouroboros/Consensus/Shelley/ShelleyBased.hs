@@ -21,11 +21,8 @@ import           Data.SOP.Strict
 
 import           Ouroboros.Consensus.Util.OptNP (OptNP (..))
 
-import           Ouroboros.Consensus.HardFork.Combinator
-
 import           Ouroboros.Consensus.Shelley.Ledger (ShelleyBlock)
-import           Ouroboros.Consensus.Shelley.Protocol (PraosCrypto)
-import           Ouroboros.Consensus.Shelley.Eras (EraCrypto, ShelleyBasedEra)
+import           Ouroboros.Consensus.Shelley.Eras (EraCrypto)
 
 {-------------------------------------------------------------------------------
   Injection from Shelley-based eras into consensus mode eras

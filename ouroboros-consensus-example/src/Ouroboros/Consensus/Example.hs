@@ -20,7 +20,7 @@ module Ouroboros.Consensus.Example (
 
 import           Ouroboros.Consensus.Util.IOLike
 
-import           Ouroboros.Consensus.Cardano (Protocol (..),
+import           Ouroboros.Consensus.Protocol (Protocol (..),
                      ProtocolClient (..))
 
 import           Ouroboros.Consensus.HardFork.Combinator

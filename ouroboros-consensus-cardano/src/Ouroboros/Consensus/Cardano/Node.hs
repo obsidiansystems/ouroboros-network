@@ -91,7 +91,6 @@ import           Ouroboros.Consensus.Cardano.CanHardFork
 -------------------------------------------------------------------------------}
 
 instance SerialiseConstraintsHFC ByronBlock
-instance ShelleyBasedEra era => SerialiseConstraintsHFC (ShelleyBlock era)
 
 -- | Important: we need to maintain binary compatibility with Byron blocks, as
 -- they are already stored on disk.

@@ -75,8 +75,6 @@ import           Ouroboros.Consensus.Example.CanHardFork
   SerialiseHFC
 -------------------------------------------------------------------------------}
 
-instance ShelleyBasedEra era => SerialiseConstraintsHFC (ShelleyBlock era)
-
 instance ExampleHardForkConstraints c => SerialiseHFC (ExampleEras c) where
   encodeDiskHfcBlock (ExampleCodecConfig ccfgShelley ccfgExample) = \case
       -- For Shelley and later eras, we need to prepend the hard fork envelope.
