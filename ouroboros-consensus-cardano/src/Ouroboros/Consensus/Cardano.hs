@@ -7,6 +7,7 @@
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE TypeOperators         #-}
 {-# LANGUAGE TypeSynonymInstances  #-}
+{-# OPTIONS_GHC -Wno-orphans       #-}
 
 module Ouroboros.Consensus.Cardano (
     -- * The block type of the Cardano block chain

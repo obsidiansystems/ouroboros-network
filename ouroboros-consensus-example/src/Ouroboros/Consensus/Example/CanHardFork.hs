@@ -32,15 +32,15 @@ import           Ouroboros.Consensus.Ledger.Abstract
 import           Ouroboros.Consensus.TypeFamilyWrappers
 import           Ouroboros.Consensus.Util (eitherToMaybe)
 
+import           Ouroboros.Consensus.HardFork
 import           Ouroboros.Consensus.HardFork.Combinator
 import           Ouroboros.Consensus.HardFork.Combinator.State.Types
 import           Ouroboros.Consensus.HardFork.Combinator.Util.InPairs
                      (RequiringBoth (..), ignoringBoth)
 import           Ouroboros.Consensus.HardFork.Combinator.Util.Tails (Tails (..))
 
-import           Ouroboros.Consensus.Cardano.CanHardFork
-
 import           Ouroboros.Consensus.Shelley.Ledger
+import           Ouroboros.Consensus.Shelley.ShelleyHFC
 import           Ouroboros.Consensus.Shelley.Node ()
 import           Ouroboros.Consensus.Shelley.Protocol
 
