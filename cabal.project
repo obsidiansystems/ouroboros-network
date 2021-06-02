@@ -19,6 +19,7 @@ packages: ./typed-protocols
           ./ouroboros-consensus-shelley
           ./ouroboros-consensus-shelley-test
           ./ouroboros-consensus-test
+          ./ouroboros-consensus-voltaireprototype
           ./io-sim
           ./io-sim-classes
           ./ntp-client

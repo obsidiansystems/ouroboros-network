@@ -36,7 +36,7 @@ import qualified Cardano.Ledger.Shelley.Constraints as SL
 import qualified Shelley.Spec.Ledger.API as SL
 import           Shelley.Spec.Ledger.BaseTypes (strictMaybeToMaybe)
 
-import           Ouroboros.Consensus.Shelley.Eras (EraCrypto)
+import           Ouroboros.Consensus.Shelley.Eras (EraCrypto, WithShelleyUpdates)
 import           Ouroboros.Consensus.Shelley.Ledger.Block
 import           Ouroboros.Consensus.Shelley.Ledger.Ledger
 
@@ -104,7 +104,7 @@ data UpdateState c = UpdateState {
   deriving (Show, Eq)
 
 protocolUpdates ::
-       forall era. ShelleyBasedEra era
+       forall era. (ShelleyBasedEra era, WithShelleyUpdates era)
     => SL.ShelleyGenesis era
     -> LedgerState (ShelleyBlock era)
     -> [ProtocolUpdate era]
@@ -165,7 +165,7 @@ deriving instance Show (SL.PParamsDelta era) => Show (ShelleyLedgerUpdate era)
 instance Show (SL.PParamsDelta era) => Condense (ShelleyLedgerUpdate era) where
   condense = show
 
-instance ShelleyBasedEra era => InspectLedger (ShelleyBlock era) where
+instance (ShelleyBasedEra era, WithShelleyUpdates era) => InspectLedger (ShelleyBlock era) where
   type LedgerWarning (ShelleyBlock era) = Void
   type LedgerUpdate  (ShelleyBlock era) = ShelleyLedgerUpdate era
 

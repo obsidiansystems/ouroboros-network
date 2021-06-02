@@ -19,6 +19,7 @@ module Ouroboros.Consensus.Shelley.Eras (
   , EraCrypto
     -- * Re-exports
   , StandardCrypto
+  , WithShelleyUpdates
   ) where
 
 import           Data.Default.Class (Default)
@@ -97,7 +98,7 @@ type EraCrypto era = Crypto era
 -- and Mary) this type is set to SL.WitnessSet. This will eventually change,
 -- most likely with Alonzo, thus this equivalence will no longer be valid.
 class ( SL.ShelleyBasedEra era
-      , State (LC.EraRule "PPUP" era) ~ SL.PPUPState era
+--      , State (LC.EraRule "PPUP" era) ~ SL.PPUPState era
       , Default (State (LC.EraRule "PPUP" era))
       , HasField "_maxBHSize" (LC.PParams era) Natural
       , HasField "_maxTxSize" (LC.PParams era) Natural
@@ -125,3 +126,14 @@ instance SL.PraosCrypto c => ShelleyBasedEra (AllegraEra c) where
 
 instance SL.PraosCrypto c => ShelleyBasedEra (MaryEra c) where
   shelleyBasedEraName _ = "Mary"
+
+class 
+      ( State (LC.EraRule "PPUP" era) ~ SL.PPUPState era
+      ) => WithShelleyUpdates era
+
+instance SL.PraosCrypto c => WithShelleyUpdates (ShelleyEra c) where
+
+instance SL.PraosCrypto c => WithShelleyUpdates (AllegraEra c) where
+
+instance SL.PraosCrypto c => WithShelleyUpdates (MaryEra c) where
+

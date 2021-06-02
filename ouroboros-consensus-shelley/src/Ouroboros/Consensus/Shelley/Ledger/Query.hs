@@ -51,7 +51,7 @@ import qualified Shelley.Spec.Ledger.API as SL
 import qualified Shelley.Spec.Ledger.LedgerState as SL (RewardAccounts)
 import qualified Shelley.Spec.Ledger.RewardProvenance as SL (RewardProvenance)
 
-import           Ouroboros.Consensus.Shelley.Eras (EraCrypto)
+import           Ouroboros.Consensus.Shelley.Eras (EraCrypto, WithShelleyUpdates)
 import           Ouroboros.Consensus.Shelley.Ledger.Block
 import           Ouroboros.Consensus.Shelley.Ledger.Config
 import           Ouroboros.Consensus.Shelley.Ledger.Ledger
@@ -164,7 +164,7 @@ data instance Query (ShelleyBlock era) :: Type -> Type where
 
 instance Typeable era => ShowProxy (Query (ShelleyBlock era)) where
 
-instance ShelleyBasedEra era => QueryLedger (ShelleyBlock era) where
+instance (ShelleyBasedEra era, WithShelleyUpdates era) => QueryLedger (ShelleyBlock era) where
   answerQuery cfg query ext =
       case query of
         GetLedgerTip ->
@@ -336,7 +336,7 @@ querySupportedVersion = \case
 -------------------------------------------------------------------------------}
 
 getProposedPPUpdates ::
-     ShelleyBasedEra era
+     (ShelleyBasedEra era, WithShelleyUpdates era)
   => SL.NewEpochState era -> SL.ProposedPPUpdates era
 getProposedPPUpdates = SL.proposals . SL._ppups
                      . SL._utxoState . SL.esLState . SL.nesEs

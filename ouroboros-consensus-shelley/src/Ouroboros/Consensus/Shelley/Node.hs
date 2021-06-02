@@ -378,7 +378,7 @@ instance ShelleyBasedEra era => BlockSupportsMetrics (ShelleyBlock era) where
          SelfIssued    -> IsSelfIssued
          NotSelfIssued -> IsNotSelfIssued
 
-instance ShelleyBasedEra era => RunNode (ShelleyBlock era)
+instance (ShelleyBasedEra era, WithShelleyUpdates era) => RunNode (ShelleyBlock era)
 
 {-------------------------------------------------------------------------------
   Register genesis staking
