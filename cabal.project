@@ -179,7 +179,7 @@ source-repository-package
 source-repository-package
   type: git
   location: https://github.com/obsidiansystems/cardano-ledger-specs
-  tag: 32b9be0009e1407d3272da134ffd85eafd99c672
+  tag: d8847cbbaed569e1adc828f3a7e36ccafe2c0558
   --sha256: 13pzykxjgld38q38jvkvap05mnfcfs7ma7vfbgcd41qy50i1qdxp
   subdir:
     byron/chain/executable-spec

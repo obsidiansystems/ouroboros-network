@@ -8,7 +8,7 @@ import           Ouroboros.Consensus.HardFork.Combinator.Condense
 
 import           Ouroboros.Consensus.Shelley.Ledger
 
-import           Ouroboros.Consensus.Voltaire.Prototype.Block
+import           Ouroboros.Consensus.Example.Block (ExampleBlock)
 import           Ouroboros.Consensus.Voltaire.Prototype.CanHardFork
 
 {-------------------------------------------------------------------------------

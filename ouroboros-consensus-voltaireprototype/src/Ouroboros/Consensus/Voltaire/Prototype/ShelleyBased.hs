@@ -12,7 +12,7 @@ import           Data.SOP.Strict
 
 import           Ouroboros.Consensus.HardFork.Combinator
 
-import           Ouroboros.Consensus.VoltairePrototype.Block
+import           Ouroboros.Consensus.Voltaire.Prototype.Block
 import           Ouroboros.Consensus.Shelley.Ledger (ShelleyBlock)
 import           Ouroboros.Consensus.Shelley.Protocol (PraosCrypto)
 import           Ouroboros.Consensus.Shelley.ShelleyBased

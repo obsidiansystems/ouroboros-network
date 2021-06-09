@@ -12,7 +12,7 @@
 module Ouroboros.Consensus.Voltaire.Prototype (
     -- * The block type of the Example block chain
     VoltairePrototypeBlock
-  , ProtocolVoltairePrototype
+  , ProtocolExample
   ) where
 
 import           Ouroboros.Consensus.HardFork.Combinator

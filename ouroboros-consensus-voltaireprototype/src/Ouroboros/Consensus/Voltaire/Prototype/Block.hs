@@ -84,6 +84,9 @@ import qualified Ouroboros.Consensus.HardFork.Combinator.State as State
 
 import           Ouroboros.Consensus.Voltaire.Prototype.Eras
 import           Ouroboros.Consensus.Shelley.Ledger (ShelleyBlock)
+import           Cardano.Ledger.Voltaire.Prototype (VoltairePrototype(VoltairePrototype_One))
+
+type VoltairePrototypeEraOne = VoltairePrototypeEra 'VoltairePrototype_One
 
 {-------------------------------------------------------------------------------
   The eras of the VoltairePrototype block chain
@@ -94,12 +97,12 @@ import           Ouroboros.Consensus.Shelley.Ledger (ShelleyBlock)
 -- We parameterise over the crypto: @c@.
 type VoltairePrototypeEras c =
   '[ ShelleyBlock (ShelleyEra c)
-   , ShelleyBlock (VoltairePrototypeEra c)
+   , ShelleyBlock (VoltairePrototypeEraOne c)
    ]
 
 type ShelleyBasedVoltairePrototypeEras c =
   '[ ShelleyEra c
-   , VoltairePrototypeEra c
+   , VoltairePrototypeEraOne c
    ]
 
 {-------------------------------------------------------------------------------
@@ -120,7 +123,7 @@ type VoltairePrototypeBlock c = HardForkBlock (VoltairePrototypeEras c)
 pattern BlockShelley :: ShelleyBlock (ShelleyEra c) -> VoltairePrototypeBlock c
 pattern BlockShelley b = HardForkBlock (OneEraBlock (Z (I b)))
 
-pattern BlockVoltairePrototype :: ShelleyBlock (VoltairePrototypeEra c) -> VoltairePrototypeBlock c
+pattern BlockVoltairePrototype :: ShelleyBlock (VoltairePrototypeEraOne c) -> VoltairePrototypeBlock c
 pattern BlockVoltairePrototype b = HardForkBlock (OneEraBlock (S (Z (I b))))
 
 {-# COMPLETE BlockShelley, BlockVoltairePrototype #-}
@@ -138,7 +141,7 @@ pattern HeaderShelley ::
 pattern HeaderShelley h = HardForkHeader (OneEraHeader (Z h))
 
 pattern HeaderVoltairePrototype ::
-     Header (ShelleyBlock (VoltairePrototypeEra c))
+     Header (ShelleyBlock (VoltairePrototypeEraOne c))
   -> VoltairePrototypeHeader c
 pattern HeaderVoltairePrototype h = HardForkHeader (OneEraHeader (S (Z h)))
 
@@ -154,7 +157,7 @@ type VoltairePrototypeGenTx c = GenTx (VoltairePrototypeBlock c)
 pattern GenTxShelley :: GenTx (ShelleyBlock (ShelleyEra c)) -> VoltairePrototypeGenTx c
 pattern GenTxShelley tx = HardForkGenTx (OneEraGenTx (Z tx))
 
-pattern GenTxVoltairePrototype :: GenTx (ShelleyBlock (VoltairePrototypeEra c)) -> VoltairePrototypeGenTx c
+pattern GenTxVoltairePrototype :: GenTx (ShelleyBlock (VoltairePrototypeEraOne c)) -> VoltairePrototypeGenTx c
 pattern GenTxVoltairePrototype tx = HardForkGenTx (OneEraGenTx (S (Z tx)))
 
 {-# COMPLETE GenTxShelley, GenTxVoltairePrototype #-}
@@ -169,7 +172,7 @@ pattern GenTxIdShelley txid =
     HardForkGenTxId (OneEraGenTxId (Z (WrapGenTxId txid)))
 
 pattern GenTxIdVoltairePrototype ::
-     GenTxId (ShelleyBlock (VoltairePrototypeEra c))
+     GenTxId (ShelleyBlock (VoltairePrototypeEraOne c))
   -> VoltairePrototypeGenTxId c
 pattern GenTxIdVoltairePrototype txid =
     HardForkGenTxId (OneEraGenTxId (S (Z (WrapGenTxId txid))))
@@ -199,7 +202,7 @@ pattern ApplyTxErrShelley err =
     HardForkApplyTxErrFromEra (OneEraApplyTxErr (Z (WrapApplyTxErr err)))
 
 pattern ApplyTxErrVoltairePrototype ::
-     ApplyTxErr (ShelleyBlock (VoltairePrototypeEra c))
+     ApplyTxErr (ShelleyBlock (VoltairePrototypeEraOne c))
   -> VoltairePrototypeApplyTxErr c
 pattern ApplyTxErrVoltairePrototype err =
     HardForkApplyTxErrFromEra (OneEraApplyTxErr (S (Z (WrapApplyTxErr err))))
@@ -240,7 +243,7 @@ pattern LedgerErrorShelley err =
       (OneEraLedgerError (Z (WrapLedgerErr err)))
 
 pattern LedgerErrorVoltairePrototype ::
-     LedgerError (ShelleyBlock (VoltairePrototypeEra c))
+     LedgerError (ShelleyBlock (VoltairePrototypeEraOne c))
   -> VoltairePrototypeLedgerError c
 pattern LedgerErrorVoltairePrototype err =
     HardForkLedgerErrorFromEra
@@ -268,7 +271,7 @@ pattern OtherHeaderEnvelopeErrorShelley err =
     HardForkEnvelopeErrFromEra (OneEraEnvelopeErr (Z (WrapEnvelopeErr err)))
 
 pattern OtherHeaderEnvelopeErrorVoltairePrototype
-  :: OtherHeaderEnvelopeError (ShelleyBlock (VoltairePrototypeEra c))
+  :: OtherHeaderEnvelopeError (ShelleyBlock (VoltairePrototypeEraOne c))
   -> VoltairePrototypeOtherHeaderEnvelopeError c
 pattern OtherHeaderEnvelopeErrorVoltairePrototype err =
     HardForkEnvelopeErrFromEra (OneEraEnvelopeErr (S (Z (WrapEnvelopeErr err))))
@@ -296,7 +299,7 @@ pattern TipInfoShelley ::
 pattern TipInfoShelley ti = OneEraTipInfo (Z (WrapTipInfo ti))
 
 pattern TipInfoVoltairePrototype ::
-     TipInfo (ShelleyBlock (VoltairePrototypeEra c))
+     TipInfo (ShelleyBlock (VoltairePrototypeEraOne c))
   -> VoltairePrototypeTipInfo c
 pattern TipInfoVoltairePrototype ti = OneEraTipInfo (S (Z (WrapTipInfo ti)))
 
@@ -323,7 +326,7 @@ pattern QueryIfCurrentShelley q = QueryIfCurrent (QZ q)
 pattern QueryIfCurrentVoltairePrototype
   :: ()
   => VoltairePrototypeQueryResult c result ~ a
-  => Query (ShelleyBlock (VoltairePrototypeEra c)) result
+  => Query (ShelleyBlock (VoltairePrototypeEraOne c)) result
   -> VoltairePrototypeQuery c a
 pattern QueryIfCurrentVoltairePrototype q = QueryIfCurrent (QS (QZ q))
 
@@ -386,7 +389,7 @@ type VoltairePrototypeCodecConfig c = CodecConfig (VoltairePrototypeBlock c)
 
 pattern VoltairePrototypeCodecConfig
   :: CodecConfig (ShelleyBlock (ShelleyEra c))
-  -> CodecConfig (ShelleyBlock (VoltairePrototypeEra c))
+  -> CodecConfig (ShelleyBlock (VoltairePrototypeEraOne c))
   -> VoltairePrototypeCodecConfig c
 pattern VoltairePrototypeCodecConfig cfgShelley cfgVoltairePrototype =
     HardForkCodecConfig {
@@ -411,7 +414,7 @@ type VoltairePrototypeBlockConfig c = BlockConfig (VoltairePrototypeBlock c)
 
 pattern VoltairePrototypeBlockConfig
   :: BlockConfig (ShelleyBlock (ShelleyEra c))
-  -> BlockConfig (ShelleyBlock (VoltairePrototypeEra c))
+  -> BlockConfig (ShelleyBlock (VoltairePrototypeEraOne c))
   -> VoltairePrototypeBlockConfig c
 pattern VoltairePrototypeBlockConfig cfgShelley cfgVoltairePrototype =
     HardForkBlockConfig {
@@ -436,7 +439,7 @@ type VoltairePrototypeStorageConfig c = StorageConfig (VoltairePrototypeBlock c)
 
 pattern VoltairePrototypeStorageConfig
   :: StorageConfig (ShelleyBlock (ShelleyEra c))
-  -> StorageConfig (ShelleyBlock (VoltairePrototypeEra c))
+  -> StorageConfig (ShelleyBlock (VoltairePrototypeEraOne c))
   -> VoltairePrototypeStorageConfig c
 pattern VoltairePrototypeStorageConfig cfgShelley cfgVoltairePrototype =
     HardForkStorageConfig {
@@ -464,7 +467,7 @@ type VoltairePrototypeConsensusConfig c =
 
 pattern VoltairePrototypeConsensusConfig
   :: PartialConsensusConfig (BlockProtocol (ShelleyBlock (ShelleyEra c)))
-  -> PartialConsensusConfig (BlockProtocol (ShelleyBlock (VoltairePrototypeEra c)))
+  -> PartialConsensusConfig (BlockProtocol (ShelleyBlock (VoltairePrototypeEraOne c)))
   -> VoltairePrototypeConsensusConfig c
 pattern VoltairePrototypeConsensusConfig cfgShelley cfgVoltairePrototype <-
     HardForkConsensusConfig {
@@ -491,7 +494,7 @@ type VoltairePrototypeLedgerConfig c = HardForkLedgerConfig (VoltairePrototypeEr
 
 pattern VoltairePrototypeLedgerConfig
   :: PartialLedgerConfig (ShelleyBlock (ShelleyEra c))
-  -> PartialLedgerConfig (ShelleyBlock (VoltairePrototypeEra c))
+  -> PartialLedgerConfig (ShelleyBlock (VoltairePrototypeEraOne c))
   -> VoltairePrototypeLedgerConfig c
 pattern VoltairePrototypeLedgerConfig cfgShelley cfgVoltairePrototype <-
     HardForkLedgerConfig {
@@ -525,7 +528,7 @@ pattern LedgerStateShelley st <-
         (TZ (State.Current { currentState = st })))
 
 pattern LedgerStateVoltairePrototype
-  :: LedgerState (ShelleyBlock (VoltairePrototypeEra c))
+  :: LedgerState (ShelleyBlock (VoltairePrototypeEraOne c))
   -> VoltairePrototypeLedgerState c
 pattern LedgerStateVoltairePrototype st <-
     HardForkLedgerState
@@ -555,7 +558,7 @@ pattern ChainDepStateShelley st <-
       (TZ (State.Current { currentState = WrapChainDepState st }))
 
 pattern ChainDepStateVoltairePrototype
-  :: ChainDepState (BlockProtocol (ShelleyBlock (VoltairePrototypeEra c)))
+  :: ChainDepState (BlockProtocol (ShelleyBlock (VoltairePrototypeEraOne c)))
   -> VoltairePrototypeChainDepState c
 pattern ChainDepStateVoltairePrototype st <-
     State.HardForkState

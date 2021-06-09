@@ -27,6 +27,7 @@ module Ouroboros.Consensus.Voltaire.Prototype.CanHardFork (
 
 import           Control.Monad.Except (runExcept)
 import           Data.SOP.Strict (NP (..), unComp, (:.:) (..))
+import           Data.Void (Void)
 
 import           Ouroboros.Consensus.Ledger.Abstract
 import           Ouroboros.Consensus.TypeFamilyWrappers
@@ -43,11 +44,14 @@ import           Ouroboros.Consensus.Shelley.Ledger
 import           Ouroboros.Consensus.Shelley.Node ()
 import           Ouroboros.Consensus.Shelley.Protocol
 import           Ouroboros.Consensus.Shelley.ShelleyHFC
+import           Ouroboros.Consensus.Shelley.Eras (WithShelleyUpdates)
 
 import qualified Cardano.Ledger.Era as SL
-import           Cardano.Ledger.Voltaire.Prototype.Translation ()
+import           Cardano.Ledger.Tx (Tx)
 
 import           Ouroboros.Consensus.Voltaire.Prototype.Block
+import           Cardano.Ledger.Voltaire.Prototype (VoltairePrototype(VoltairePrototype_One))
+import           Shelley.Spec.Ledger.LedgerState (NewEpochState)
 
 {-------------------------------------------------------------------------------
   CanHardFork
@@ -56,10 +60,17 @@ import           Ouroboros.Consensus.Voltaire.Prototype.Block
 type VoltairePrototypeHardForkConstraints c =
   ( PraosCrypto c
   , ShelleyBasedEra (ShelleyEra c)
-  , ShelleyBasedEra (VoltairePrototypeEra c)
+  , ShelleyBasedEra (VoltairePrototypeEra 'VoltairePrototype_One c)
+  , SL.PreviousEra (VoltairePrototypeEra 'VoltairePrototype_One c) ~ ShelleyEra c
+  , SL.TranslationError (VoltairePrototypeEra 'VoltairePrototype_One c) NewEpochState ~ Void
+  , SL.TranslateEra (VoltairePrototypeEra 'VoltairePrototype_One c) NewEpochState
+  , SL.TranslationContext (VoltairePrototypeEra 'VoltairePrototype_One c) ~ ()
+  , SL.TranslateEra (VoltairePrototypeEra 'VoltairePrototype_One c) Tx
   )
 
-instance VoltairePrototypeHardForkConstraints c => CanHardFork (ExampleEras c) where
+instance PraosCrypto c => WithShelleyUpdates (VoltairePrototypeEra 'VoltairePrototype_One c)
+
+instance VoltairePrototypeHardForkConstraints c => CanHardFork (VoltairePrototypeEras c) where
   hardForkEraTranslation = EraTranslation {
       translateLedgerState   =
           PCons translateLedgerStateShelleyToVoltairePrototypeWrapper
@@ -86,21 +97,28 @@ instance VoltairePrototypeHardForkConstraints c => CanHardFork (ExampleEras c) w
 -------------------------------------------------------------------------------}
 
 translateLedgerStateShelleyToVoltairePrototypeWrapper ::
-     PraosCrypto c
+     ( PraosCrypto c
+     , SL.TranslationError (VoltairePrototypeEra 'VoltairePrototype_One c) NewEpochState ~ Void
+     , SL.TranslateEra (VoltairePrototypeEra 'VoltairePrototype_One c) NewEpochState
+     , SL.TranslationContext (VoltairePrototypeEra 'VoltairePrototype_One c) ~ ()
+     )
   => RequiringBoth
        WrapLedgerConfig
        (Translate LedgerState)
        (ShelleyBlock (ShelleyEra c))
-       (ShelleyBlock (VoltairePrototypeEra c))
+       (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_One c))
 translateLedgerStateShelleyToVoltairePrototypeWrapper =
     ignoringBoth $
       Translate $ \_epochNo ->
         unComp . SL.translateEra' () . Comp
 
 translateTxShelleyToVoltairePrototypeWrapper ::
-     PraosCrypto c
+     ( PraosCrypto c
+     , SL.TranslateEra (VoltairePrototypeEra 'VoltairePrototype_One c) Tx
+     , SL.TranslationContext (VoltairePrototypeEra 'VoltairePrototype_One c) ~ ()
+     )
   => InjectTx
        (ShelleyBlock (ShelleyEra c))
-       (ShelleyBlock (VoltairePrototypeEra c))
+       (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_One c))
 translateTxShelleyToVoltairePrototypeWrapper = InjectTx $
     fmap unComp . eitherToMaybe . runExcept . SL.translateEra () . Comp

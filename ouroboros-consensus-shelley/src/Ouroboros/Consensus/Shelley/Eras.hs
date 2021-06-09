@@ -98,7 +98,7 @@ type EraCrypto era = Crypto era
 -- and Mary) this type is set to SL.WitnessSet. This will eventually change,
 -- most likely with Alonzo, thus this equivalence will no longer be valid.
 class ( SL.ShelleyBasedEra era
---      , State (LC.EraRule "PPUP" era) ~ SL.PPUPState era
+      , State (LC.EraRule "PPUP" era) ~ SL.PPUPState era
       , Default (State (LC.EraRule "PPUP" era))
       , HasField "_maxBHSize" (LC.PParams era) Natural
       , HasField "_maxTxSize" (LC.PParams era) Natural

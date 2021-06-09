@@ -117,6 +117,8 @@ pattern ShelleyBasedHardForkNodeToClientVersion1 =
 type ShelleyBasedHardForkConstraints era1 era2 =
   ( ShelleyBasedEra era1
   , ShelleyBasedEra era2
+  , WithShelleyUpdates era1
+  , WithShelleyUpdates era2
   , EraCrypto era1 ~ EraCrypto era2
   , SL.PreviousEra era2 ~ era1
 

@@ -22,7 +22,6 @@ module Ouroboros.Consensus.Voltaire.Prototype.Eras (
   ) where
 
 import           Cardano.Ledger.Voltaire.Prototype (VoltairePrototype(..), VoltairePrototypeEra)
-import           Cardano.Ledger.Voltaire.Prototype.Class
 
 import           Ouroboros.Consensus.Shelley.Eras
 import qualified Shelley.Spec.Ledger.API as SL
@@ -36,3 +35,8 @@ type StandardVoltairePrototype = VoltairePrototypeEra 'VoltairePrototype_One Sta
 
 instance (SL.PraosCrypto c {-, PpupState(VoltairePrototypeEra proto c) ~ SL.PPupState (VoltairePrototypeEra proto c), VoltaireClass (VoltairePrototypeEra proto c) -}) => ShelleyBasedEra (VoltairePrototypeEra 'VoltairePrototype_One c) where
   shelleyBasedEraName _ = "VoltairePrototype"
+
+instance SL.PraosCrypto c => SL.ShelleyBasedEra (VoltairePrototypeEra 'VoltairePrototype_One c)
+instance SL.PraosCrypto c => SL.ApplyBlock (VoltairePrototypeEra 'VoltairePrototype_One c)
+instance SL.PraosCrypto c => SL.ApplyTx (VoltairePrototypeEra 'VoltairePrototype_One c)
+instance SL.PraosCrypto c => SL.GetLedgerView (VoltairePrototypeEra 'VoltairePrototype_One c)
