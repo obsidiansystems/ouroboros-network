@@ -7,7 +7,8 @@
 module Ouroboros.Consensus.Voltaire.Prototype.Block (
     -- * Eras
     -- XXX
-    VoltairePrototypeEras
+    VoltairePrototypeEraOne
+  , VoltairePrototypeEras
   , module Ouroboros.Consensus.Voltaire.Prototype.Eras
   , ShelleyBasedVoltairePrototypeEras
     -- * Block

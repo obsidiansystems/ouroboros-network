@@ -10,9 +10,9 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Ouroboros.Consensus.Voltaire.Prototype (
-    -- * The block type of the Example block chain
+    -- * The block type of the Voltaire Prototype block chain
     VoltairePrototypeBlock
-  , ProtocolExample
+  , ProtocolVoltairePrototype
   ) where
 
 import           Ouroboros.Consensus.HardFork.Combinator
@@ -21,6 +21,6 @@ import           Ouroboros.Consensus.Shelley.Ledger
 
 import           Ouroboros.Consensus.Voltaire.Prototype.Block
 
-type ProtocolExample = HardForkProtocol '[ ShelleyBlock StandardShelley
-                                         , ShelleyBlock StandardVoltairePrototype
-                                         ]
+type ProtocolVoltairePrototype = HardForkProtocol '[ ShelleyBlock StandardShelley
+                                                   , ShelleyBlock StandardVoltairePrototype
+                                                   ]

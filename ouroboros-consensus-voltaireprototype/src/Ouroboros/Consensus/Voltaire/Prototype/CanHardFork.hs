@@ -41,7 +41,7 @@ import           Ouroboros.Consensus.HardFork.Combinator.Util.Tails (Tails (..))
 import           Ouroboros.Consensus.HardFork.Simple
 
 import           Ouroboros.Consensus.Shelley.Ledger
-import           Ouroboros.Consensus.Shelley.Node ()
+import           Ouroboros.Consensus.Shelley.Node (ShelleyGenesis)
 import           Ouroboros.Consensus.Shelley.Protocol
 import           Ouroboros.Consensus.Shelley.ShelleyHFC
 import           Ouroboros.Consensus.Shelley.Eras (WithShelleyUpdates)
@@ -66,6 +66,8 @@ type VoltairePrototypeHardForkConstraints c =
   , SL.TranslateEra (VoltairePrototypeEra 'VoltairePrototype_One c) NewEpochState
   , SL.TranslationContext (VoltairePrototypeEra 'VoltairePrototype_One c) ~ ()
   , SL.TranslateEra (VoltairePrototypeEra 'VoltairePrototype_One c) Tx
+  , SL.TranslationError (VoltairePrototypeEra 'VoltairePrototype_One c) ShelleyGenesis ~ Void
+  , SL.TranslateEra (VoltairePrototypeEra 'VoltairePrototype_One c) ShelleyGenesis
   )
 
 instance PraosCrypto c => WithShelleyUpdates (VoltairePrototypeEra 'VoltairePrototype_One c)

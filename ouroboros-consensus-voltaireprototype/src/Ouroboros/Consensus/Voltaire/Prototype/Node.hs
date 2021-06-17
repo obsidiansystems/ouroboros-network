@@ -11,18 +11,18 @@
 {-# LANGUAGE TypeOperators       #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 module Ouroboros.Consensus.Voltaire.Prototype.Node (
-    ExampleHardForkConstraints
+    VoltairePrototypeHardForkConstraints
   , MaxMajorProtVer (..)
-  , ProtocolParamsExample (..)
+  , ProtocolParamsVoltairePrototype (..)
   , ProtocolParamsTransition (..)
   , TriggerHardFork (..)
-  , protocolClientInfoExample
-  , protocolInfoExample
+  , protocolClientInfoVoltairePrototype
+  , protocolInfoVoltairePrototype
     -- * SupportedNetworkProtocolVersion
-  , pattern ExampleNodeToClientVersion1
-  , pattern ExampleNodeToClientVersion2
-  , pattern ExampleNodeToNodeVersion1
-  , pattern ExampleNodeToNodeVersion2
+  , pattern VoltairePrototypeNodeToClientVersion1
+  , pattern VoltairePrototypeNodeToClientVersion2
+  , pattern VoltairePrototypeNodeToNodeVersion1
+  , pattern VoltairePrototypeNodeToNodeVersion2
   ) where
 
 import qualified Codec.CBOR.Decoding as CBOR
@@ -58,7 +58,7 @@ import           Ouroboros.Consensus.HardFork.Combinator.Serialisation
 import qualified Cardano.Ledger.Era as SL
 import           Cardano.Ledger.Val (coin, (<->))
 import qualified Cardano.Ledger.Val as Val
-import           Ouroboros.Consensus.Example.ShelleyBased
+import           Ouroboros.Consensus.Voltaire.Prototype.ShelleyBased
 import           Ouroboros.Consensus.Shelley.Ledger (ShelleyBlock)
 import qualified Ouroboros.Consensus.Shelley.Ledger as Shelley
 import           Ouroboros.Consensus.Shelley.Ledger.NetworkProtocolVersion
@@ -68,26 +68,26 @@ import qualified Ouroboros.Consensus.Shelley.Protocol as Shelley
 import           Ouroboros.Consensus.Shelley.ShelleyBased
 import qualified Shelley.Spec.Ledger.API as SL
 
-import           Ouroboros.Consensus.Example.Block
-import           Ouroboros.Consensus.Example.CanHardFork
+import           Ouroboros.Consensus.Voltaire.Prototype.Block
+import           Ouroboros.Consensus.Voltaire.Prototype.CanHardFork
 
 {-------------------------------------------------------------------------------
   SerialiseHFC
 -------------------------------------------------------------------------------}
 
-instance ExampleHardForkConstraints c => SerialiseHFC (ExampleEras c) where
-  encodeDiskHfcBlock (ExampleCodecConfig ccfgShelley ccfgExample) = \case
+instance VoltairePrototypeHardForkConstraints c => SerialiseHFC (VoltairePrototypeEras c) where
+  encodeDiskHfcBlock (VoltairePrototypeCodecConfig ccfgShelley ccfgVoltairePrototype) = \case
       -- For Shelley and later eras, we need to prepend the hard fork envelope.
       BlockShelley blockShelley -> prependTag 2 $ encodeDisk ccfgShelley blockShelley
-      BlockExample blockExample -> prependTag 99 $ encodeDisk ccfgExample blockExample
-  decodeDiskHfcBlock (ExampleCodecConfig ccfgShelley ccfgExample) = do
-      enforceSize "ExampleBlock" 2
+      BlockVoltairePrototype blockVoltairePrototype -> prependTag 99 $ encodeDisk ccfgVoltairePrototype blockVoltairePrototype
+  decodeDiskHfcBlock (VoltairePrototypeCodecConfig ccfgShelley ccfgVoltairePrototype) = do
+      enforceSize "VoltairePrototypeBlock" 2
       CBOR.decodeWord >>= \case
         -- We don't have to drop the first two bytes from the 'ByteString'
         -- passed to the decoder as slicing already takes care of this.
         2  -> fmap BlockShelley <$> decodeDisk ccfgShelley
-        99 -> fmap BlockExample <$> decodeDisk ccfgExample
-        t  -> cborError $ DecoderErrorUnknownTag "ExampleBlock" (fromIntegral t)
+        99 -> fmap BlockVoltairePrototype <$> decodeDisk ccfgVoltairePrototype
+        t  -> cborError $ DecoderErrorUnknownTag "VoltairePrototypeBlock" (fromIntegral t)
 
   reconstructHfcPrefixLen _ = PrefixLen 2
 
@@ -95,15 +95,15 @@ instance ExampleHardForkConstraints c => SerialiseHFC (ExampleEras c) where
       case Short.index prefix 1 of
         2  -> SomeSecond $ NestedCtxt (NCZ Shelley.CtxtShelley)
         99 -> SomeSecond $ NestedCtxt (NCS (NCZ Shelley.CtxtShelley))
-        _  -> error $ "ExampleBlock: invalid prefix " <> show prefix
+        _  -> error $ "VoltairePrototypeBlock: invalid prefix " <> show prefix
 
   getHfcBinaryBlockInfo = \case
       -- For Shelley and the later eras, we need to account for the two extra
       -- bytes of the envelope.
       BlockShelley blockShelley ->
         shiftHeaderOffset 2 $ getBinaryBlockInfo blockShelley
-      BlockExample blockExample ->
-        shiftHeaderOffset 2 $ getBinaryBlockInfo blockExample
+      BlockVoltairePrototype blockVoltairePrototype ->
+        shiftHeaderOffset 2 $ getBinaryBlockInfo blockVoltairePrototype
     where
       shiftHeaderOffset :: Word16 -> BinaryBlockInfo -> BinaryBlockInfo
       shiftHeaderOffset shift binfo = binfo {
@@ -114,7 +114,7 @@ instance ExampleHardForkConstraints c => SerialiseHFC (ExampleEras c) where
       -- For Shelley and later eras, we add two extra bytes, see the
       -- 'SerialiseHFC' instance.
       HeaderShelley headerShelley -> estimateBlockSize headerShelley + 2
-      HeaderExample headerExample -> estimateBlockSize headerExample + 2
+      HeaderVoltairePrototype headerVoltairePrototype -> estimateBlockSize headerVoltairePrototype + 2
 
 -- | Prepend the given tag by creating a CBOR 2-tuple with the tag as the
 -- first element and the given 'Encoding' as the second.
@@ -129,9 +129,9 @@ prependTag tag payload = mconcat [
   SupportedNetworkProtocolVersion instance
 -------------------------------------------------------------------------------}
 
--- | The hard fork enabled with the Shelley and Example eras enabled.
-pattern ExampleNodeToNodeVersion1 :: BlockNodeToNodeVersion (ExampleBlock c)
-pattern ExampleNodeToNodeVersion1 =
+-- | The hard fork enabled with the Shelley and VoltairePrototype eras enabled.
+pattern VoltairePrototypeNodeToNodeVersion1 :: BlockNodeToNodeVersion (VoltairePrototypeBlock c)
+pattern VoltairePrototypeNodeToNodeVersion1 =
     HardForkNodeToNodeEnabled
       HardForkSpecificNodeToNodeVersion1
       (  EraNodeToNodeEnabled ShelleyNodeToNodeVersion1
@@ -139,9 +139,9 @@ pattern ExampleNodeToNodeVersion1 =
       :* Nil
       )
 
--- | The hard fork enabled with the Shelley and Example eras enabled.
-pattern ExampleNodeToNodeVersion2 :: BlockNodeToNodeVersion (ExampleBlock c)
-pattern ExampleNodeToNodeVersion2 =
+-- | The hard fork enabled with the Shelley and VoltairePrototype eras enabled.
+pattern VoltairePrototypeNodeToNodeVersion2 :: BlockNodeToNodeVersion (VoltairePrototypeBlock c)
+pattern VoltairePrototypeNodeToNodeVersion2 =
     HardForkNodeToNodeEnabled
       HardForkSpecificNodeToNodeVersion1
       (  EraNodeToNodeEnabled ShelleyNodeToNodeVersion1
@@ -150,8 +150,8 @@ pattern ExampleNodeToNodeVersion2 =
       )
 
 -- | The hard fork enabled, and the Shelley era enabled using 'ShelleyNodeToClientVersion3' protocol.
-pattern ExampleNodeToClientVersion1 :: BlockNodeToClientVersion (ExampleBlock c)
-pattern ExampleNodeToClientVersion1 =
+pattern VoltairePrototypeNodeToClientVersion1 :: BlockNodeToClientVersion (VoltairePrototypeBlock c)
+pattern VoltairePrototypeNodeToClientVersion1 =
     HardForkNodeToClientEnabled
       HardForkSpecificNodeToClientVersion2
       (  EraNodeToClientEnabled ShelleyNodeToClientVersion3
@@ -159,9 +159,9 @@ pattern ExampleNodeToClientVersion1 =
       :* Nil
       )
 
--- | The hard fork enabled, and the Shelley and Example eras enabled using 'ShelleyNodeToClientVersion3' protocol.
-pattern ExampleNodeToClientVersion2 :: BlockNodeToClientVersion (ExampleBlock c)
-pattern ExampleNodeToClientVersion2 =
+-- | The hard fork enabled, and the Shelley and VoltairePrototype eras enabled using 'ShelleyNodeToClientVersion3' protocol.
+pattern VoltairePrototypeNodeToClientVersion2 :: BlockNodeToClientVersion (VoltairePrototypeBlock c)
+pattern VoltairePrototypeNodeToClientVersion2 =
     HardForkNodeToClientEnabled
       HardForkSpecificNodeToClientVersion2
       (  EraNodeToClientEnabled ShelleyNodeToClientVersion3
@@ -169,16 +169,16 @@ pattern ExampleNodeToClientVersion2 =
       :* Nil
       )
 
-instance ExampleHardForkConstraints c
-      => SupportedNetworkProtocolVersion (ExampleBlock c) where
+instance VoltairePrototypeHardForkConstraints c
+      => SupportedNetworkProtocolVersion (VoltairePrototypeBlock c) where
   supportedNodeToNodeVersions _ = Map.fromList $
-      [ (NodeToNodeV_3, ExampleNodeToNodeVersion1)
-      , (NodeToNodeV_3, ExampleNodeToNodeVersion2)
+      [ (NodeToNodeV_3, VoltairePrototypeNodeToNodeVersion1)
+      , (NodeToNodeV_3, VoltairePrototypeNodeToNodeVersion2)
       ]
 
   supportedNodeToClientVersions _ = Map.fromList $
-      [ (NodeToClientV_4, ExampleNodeToClientVersion1)
-      , (NodeToClientV_4, ExampleNodeToClientVersion2)
+      [ (NodeToClientV_4, VoltairePrototypeNodeToClientVersion1)
+      , (NodeToClientV_4, VoltairePrototypeNodeToClientVersion2)
       ]
 
   latestReleasedNodeVersion = latestReleasedNodeVersionDefault
@@ -196,28 +196,28 @@ data ProtocolParamsTransition eraFrom eraTo = ProtocolParamsTransition {
     }
 
 -- | Parameters needed to run Shelley
-data ProtocolParamsExample = ProtocolParamsExample {
+data ProtocolParamsVoltairePrototype = ProtocolParamsVoltairePrototype {
       exampleProtVer :: SL.ProtVer
     }
 
--- | Create a 'ProtocolInfo' for 'ExampleBlock'
+-- | Create a 'ProtocolInfo' for 'VoltairePrototypeBlock'
 --
 -- NOTE: the initial staking and funds in the 'ShelleyGenesis' are ignored,
--- /unless/ configured to skip the Shelley era and hard fork to Example
+-- /unless/ configured to skip the Shelley era and hard fork to VoltairePrototype
 -- era from the start using @TriggerHardForkAtEpoch 0@ for testing purposes.
 --
 -- PRECONDITION: only a single set of Shelley credentials is allowed when used
 -- for mainnet (check against @'SL.gNetworkId' 'shelleyBasedGenesis'@).
-protocolInfoExample ::
-     forall c m. (IOLike m, ExampleHardForkConstraints c)
+protocolInfoVoltairePrototype ::
+     forall c m. (IOLike m, VoltairePrototypeHardForkConstraints c)
   => ProtocolParamsShelleyBased (ShelleyEra c)
   -> ProtocolParamsShelley
-  -> ProtocolParamsExample
+  -> ProtocolParamsVoltairePrototype
   -> ProtocolParamsTransition
        (ShelleyBlock (ShelleyEra c))
-       (ShelleyBlock (ExampleEra c))
-  -> ProtocolInfo m (ExampleBlock c)
-protocolInfoExample ProtocolParamsShelleyBased {
+       (ShelleyBlock (VoltairePrototypeEraOne c))
+  -> ProtocolInfo m (VoltairePrototypeBlock c)
+protocolInfoVoltairePrototype ProtocolParamsShelleyBased {
                         shelleyBasedGenesis           = genesisShelley
                       , shelleyBasedInitialNonce      = initialNonceShelley
                       , shelleyBasedLeaderCredentials = credssShelleyBased
@@ -225,11 +225,11 @@ protocolInfoExample ProtocolParamsShelleyBased {
                     ProtocolParamsShelley {
                         shelleyProtVer = protVerShelley
                       }
-                    ProtocolParamsExample {
-                        exampleProtVer = protVerExample
+                    ProtocolParamsVoltairePrototype {
+                        exampleProtVer = protVerVoltairePrototype
                       }
                     ProtocolParamsTransition {
-                        transitionTrigger = triggerHardForkShelleyExample
+                        transitionTrigger = triggerHardForkShelleyVoltairePrototype
                       }
   | SL.Mainnet <- SL.sgNetworkId genesisShelley
   , length credssShelleyBased > 1
@@ -238,14 +238,14 @@ protocolInfoExample ProtocolParamsShelleyBased {
   = assertWithMsg (validateGenesis genesisShelley) $
     ProtocolInfo {
         pInfoConfig       = cfg
-      , pInfoInitLedger   = initExtLedgerStateExample
+      , pInfoInitLedger   = initExtLedgerStateVoltairePrototype
       , pInfoBlockForging = blockForging
       }
   where
     -- The major protocol version of the last era is the maximum major protocol
     -- version we support.
     maxMajorProtVer :: MaxMajorProtVer
-    maxMajorProtVer = MaxMajorProtVer (pvMajor protVerExample)
+    maxMajorProtVer = MaxMajorProtVer (pvMajor protVerVoltairePrototype)
 
     -- Shelley
 
@@ -272,31 +272,31 @@ protocolInfoExample ProtocolParamsShelleyBased {
         mkPartialLedgerConfigShelley
           genesisShelley
           maxMajorProtVer
-          triggerHardForkShelleyExample
+          triggerHardForkShelleyVoltairePrototype
 
     kShelley :: SecurityParam
     kShelley = SecurityParam $ sgSecurityParam genesisShelley
 
     -- Allegra
 
-    genesisExample :: ShelleyGenesis (ExampleEra c)
-    genesisExample = SL.translateEra' () genesisShelley
+    genesisVoltairePrototype :: ShelleyGenesis (VoltairePrototypeEraOne c)
+    genesisVoltairePrototype = SL.translateEra' () genesisShelley
 
-    blockConfigExample :: BlockConfig (ShelleyBlock (ExampleEra c))
-    blockConfigExample =
+    blockConfigVoltairePrototype :: BlockConfig (ShelleyBlock (VoltairePrototypeEraOne c))
+    blockConfigVoltairePrototype =
         Shelley.mkShelleyBlockConfig
-          protVerExample
-          genesisExample
+          protVerVoltairePrototype
+          genesisVoltairePrototype
           (tpraosBlockIssuerVKey <$> credssShelleyBased)
 
-    partialConsensusConfigExample ::
-         PartialConsensusConfig (BlockProtocol (ShelleyBlock (ExampleEra c)))
-    partialConsensusConfigExample = tpraosParams
+    partialConsensusConfigVoltairePrototype ::
+         PartialConsensusConfig (BlockProtocol (ShelleyBlock (VoltairePrototypeEraOne c)))
+    partialConsensusConfigVoltairePrototype = tpraosParams
 
-    partialLedgerConfigExample :: PartialLedgerConfig (ShelleyBlock (ExampleEra c))
-    partialLedgerConfigExample =
+    partialLedgerConfigVoltairePrototype :: PartialLedgerConfig (ShelleyBlock (VoltairePrototypeEraOne c))
+    partialLedgerConfigVoltairePrototype =
         mkPartialLedgerConfigShelley
-          genesisExample
+          genesisVoltairePrototype
           maxMajorProtVer
           TriggerHardForkNever
     --
@@ -305,20 +305,20 @@ protocolInfoExample ProtocolParamsShelleyBased {
     k :: SecurityParam
     k = kShelley
 
-    shape :: History.Shape (ExampleEras c)
+    shape :: History.Shape (VoltairePrototypeEras c)
     shape = History.Shape $ Exactly $
            K (Shelley.shelleyEraParams genesisShelley)
-        :* K (Shelley.shelleyEraParams genesisExample)
+        :* K (Shelley.shelleyEraParams genesisVoltairePrototype)
         :* Nil
 
-    cfg :: TopLevelConfig (ExampleBlock c)
+    cfg :: TopLevelConfig (VoltairePrototypeBlock c)
     cfg = TopLevelConfig {
         topLevelConfigProtocol = HardForkConsensusConfig {
             hardForkConsensusConfigK      = k
           , hardForkConsensusConfigShape  = shape
           , hardForkConsensusConfigPerEra = PerEraConsensusConfig
               (  WrapPartialConsensusConfig partialConsensusConfigShelley
-              :* WrapPartialConsensusConfig partialConsensusConfigExample
+              :* WrapPartialConsensusConfig partialConsensusConfigVoltairePrototype
               :* Nil
               )
           }
@@ -326,34 +326,34 @@ protocolInfoExample ProtocolParamsShelleyBased {
             hardForkLedgerConfigShape  = shape
           , hardForkLedgerConfigPerEra = PerEraLedgerConfig
               (  WrapPartialLedgerConfig partialLedgerConfigShelley
-              :* WrapPartialLedgerConfig partialLedgerConfigExample
+              :* WrapPartialLedgerConfig partialLedgerConfigVoltairePrototype
               :* Nil
               )
           }
       , topLevelConfigBlock =
-          ExampleBlockConfig
+          VoltairePrototypeBlockConfig
             blockConfigShelley
-            blockConfigExample
+            blockConfigVoltairePrototype
       , topLevelConfigCodec =
-          ExampleCodecConfig
+          VoltairePrototypeCodecConfig
             Shelley.ShelleyCodecConfig
             Shelley.ShelleyCodecConfig
       , topLevelConfigStorage =
-          ExampleStorageConfig
+          VoltairePrototypeStorageConfig
             (Shelley.ShelleyStorageConfig tpraosSlotsPerKESPeriod k)
             (Shelley.ShelleyStorageConfig tpraosSlotsPerKESPeriod k)
       }
 
     -- Register the initial staking and initial funds (if provided in the genesis config) in
     -- the ledger state.
-    initExtLedgerStateExample :: ExtLedgerState (ExampleBlock c)
-    initExtLedgerStateExample = ExtLedgerState {
+    initExtLedgerStateVoltairePrototype :: ExtLedgerState (VoltairePrototypeBlock c)
+    initExtLedgerStateVoltairePrototype = ExtLedgerState {
           headerState = initHeaderState
         , ledgerState = overShelleyBasedLedgerState register initLedgerState
         }
       where
-        initHeaderState :: HeaderState (ExampleBlock c)
-        initLedgerState :: LedgerState (ExampleBlock c)
+        initHeaderState :: HeaderState (VoltairePrototypeBlock c)
+        initLedgerState :: LedgerState (VoltairePrototypeBlock c)
         ExtLedgerState initLedgerState initHeaderState =
           injectInitialExtLedgerState cfg $ ExtLedgerState {
             ledgerState = Shelley.ShelleyLedgerState {
@@ -421,29 +421,29 @@ protocolInfoExample ProtocolParamsShelleyBased {
     -- In case there are multiple credentials for Shelley, which is only done
     -- for testing/benchmarking purposes, we'll have a separate thread for each
     -- of them.
-    blockForging :: m [BlockForging m (ExampleBlock c)]
+    blockForging :: m [BlockForging m (VoltairePrototypeBlock c)]
     blockForging = do
-        shelleyBased :: [ OptNP 'False (BlockForging m) (ExampleEras c) ] <- blockForgingShelleyBased
-        return $ hardForkBlockForging "Example" <$> shelleyBased
+        shelleyBased :: [ OptNP 'False (BlockForging m) (VoltairePrototypeEras c) ] <- blockForgingShelleyBased
+        return $ hardForkBlockForging "VoltairePrototype" <$> shelleyBased
 
-    blockForgingShelleyBased :: m [OptNP 'False (BlockForging m) (ExampleEras c)]
+    blockForgingShelleyBased :: m [OptNP 'False (BlockForging m) (VoltairePrototypeEras c)]
     blockForgingShelleyBased = do
         shelleyBased <-
           traverse
-            (shelleySharedBlockForging (Proxy @(ShelleyBasedExampleEras c)) tpraosParams)
+            (shelleySharedBlockForging (Proxy @(ShelleyBasedVoltairePrototypeEras c)) tpraosParams)
             credssShelleyBased
         return $ reassoc <$> shelleyBased
       where
         reassoc ::
-             NP (BlockForging m :.: ShelleyBlock) (ShelleyBasedExampleEras c)
-          -> OptNP 'False (BlockForging m) (ExampleEras c)
+             NP (BlockForging m :.: ShelleyBlock) (ShelleyBasedVoltairePrototypeEras c)
+          -> OptNP 'False (BlockForging m) (VoltairePrototypeEras c)
         reassoc = injectShelleyOptNP unComp . OptNP.fromNonEmptyNP
 
-protocolClientInfoExample
-  :: forall c.  ProtocolClientInfo (ExampleBlock c)
-protocolClientInfoExample = ProtocolClientInfo {
+protocolClientInfoVoltairePrototype
+  :: forall c.  ProtocolClientInfo (VoltairePrototypeBlock c)
+protocolClientInfoVoltairePrototype = ProtocolClientInfo {
       pClientInfoCodecConfig =
-        ExampleCodecConfig
+        VoltairePrototypeCodecConfig
           (pClientInfoCodecConfig protocolClientInfoShelley)
           (pClientInfoCodecConfig protocolClientInfoShelley)
     }
