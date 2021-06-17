@@ -50,6 +50,7 @@ import qualified Cardano.Ledger.Era as SL
 import           Cardano.Ledger.Tx (Tx)
 
 import           Ouroboros.Consensus.Voltaire.Prototype.Block
+import           Cardano.Ledger.Voltaire.Prototype.Class
 import           Cardano.Ledger.Voltaire.Prototype (VoltairePrototype(VoltairePrototype_One))
 import           Shelley.Spec.Ledger.LedgerState (NewEpochState)
 
@@ -57,22 +58,23 @@ import           Shelley.Spec.Ledger.LedgerState (NewEpochState)
   CanHardFork
 -------------------------------------------------------------------------------}
 
-type VoltairePrototypeHardForkConstraints c =
+type VoltairePrototypeHardForkConstraints proto c =
   ( PraosCrypto c
+  , VoltaireClass (VoltairePrototypeEra proto c)
   , ShelleyBasedEra (ShelleyEra c)
-  , ShelleyBasedEra (VoltairePrototypeEra 'VoltairePrototype_One c)
-  , SL.PreviousEra (VoltairePrototypeEra 'VoltairePrototype_One c) ~ ShelleyEra c
-  , SL.TranslationError (VoltairePrototypeEra 'VoltairePrototype_One c) NewEpochState ~ Void
-  , SL.TranslateEra (VoltairePrototypeEra 'VoltairePrototype_One c) NewEpochState
-  , SL.TranslationContext (VoltairePrototypeEra 'VoltairePrototype_One c) ~ ()
-  , SL.TranslateEra (VoltairePrototypeEra 'VoltairePrototype_One c) Tx
-  , SL.TranslationError (VoltairePrototypeEra 'VoltairePrototype_One c) ShelleyGenesis ~ Void
-  , SL.TranslateEra (VoltairePrototypeEra 'VoltairePrototype_One c) ShelleyGenesis
+  , ShelleyBasedEra (VoltairePrototypeEra proto c)
+  , SL.PreviousEra (VoltairePrototypeEra proto c) ~ ShelleyEra c
+  , SL.TranslationError (VoltairePrototypeEra proto c) NewEpochState ~ Void
+  , SL.TranslateEra (VoltairePrototypeEra proto c) NewEpochState
+  , SL.TranslationContext (VoltairePrototypeEra proto c) ~ ()
+  , SL.TranslateEra (VoltairePrototypeEra proto c) Tx
+  , SL.TranslationError (VoltairePrototypeEra proto c) ShelleyGenesis ~ Void
+  , SL.TranslateEra (VoltairePrototypeEra proto c) ShelleyGenesis
   )
 
-instance PraosCrypto c => WithShelleyUpdates (VoltairePrototypeEra 'VoltairePrototype_One c)
+instance WithShelleyUpdates (VoltairePrototypeEra 'VoltairePrototype_One c)
 
-instance VoltairePrototypeHardForkConstraints c => CanHardFork (VoltairePrototypeEras c) where
+instance (VoltairePrototypeHardForkConstraints proto c, WithShelleyUpdates (VoltairePrototypeEra proto c)) => CanHardFork (VoltairePrototypeEras proto c) where
   hardForkEraTranslation = EraTranslation {
       translateLedgerState   =
           PCons translateLedgerStateShelleyToVoltairePrototypeWrapper
@@ -99,28 +101,30 @@ instance VoltairePrototypeHardForkConstraints c => CanHardFork (VoltairePrototyp
 -------------------------------------------------------------------------------}
 
 translateLedgerStateShelleyToVoltairePrototypeWrapper ::
-     ( PraosCrypto c
-     , SL.TranslationError (VoltairePrototypeEra 'VoltairePrototype_One c) NewEpochState ~ Void
-     , SL.TranslateEra (VoltairePrototypeEra 'VoltairePrototype_One c) NewEpochState
-     , SL.TranslationContext (VoltairePrototypeEra 'VoltairePrototype_One c) ~ ()
+     ( SL.PreviousEra (VoltairePrototypeEra proto c) ~ ShelleyEra c
+     , ShelleyBasedEra (VoltairePrototypeEra proto c)
+     , SL.TranslationError (VoltairePrototypeEra proto c) NewEpochState ~ Void
+     , SL.TranslateEra (VoltairePrototypeEra proto c) NewEpochState
+     , SL.TranslationContext (VoltairePrototypeEra proto c) ~ ()
      )
   => RequiringBoth
        WrapLedgerConfig
        (Translate LedgerState)
        (ShelleyBlock (ShelleyEra c))
-       (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_One c))
+       (ShelleyBlock (VoltairePrototypeEra proto c))
 translateLedgerStateShelleyToVoltairePrototypeWrapper =
     ignoringBoth $
       Translate $ \_epochNo ->
         unComp . SL.translateEra' () . Comp
 
 translateTxShelleyToVoltairePrototypeWrapper ::
-     ( PraosCrypto c
-     , SL.TranslateEra (VoltairePrototypeEra 'VoltairePrototype_One c) Tx
-     , SL.TranslationContext (VoltairePrototypeEra 'VoltairePrototype_One c) ~ ()
+     ( SL.PreviousEra (VoltairePrototypeEra proto c) ~ ShelleyEra c
+     , ShelleyBasedEra (VoltairePrototypeEra proto c)
+     , SL.TranslateEra (VoltairePrototypeEra proto c) Tx
+     , SL.TranslationContext (VoltairePrototypeEra proto c) ~ ()
      )
   => InjectTx
        (ShelleyBlock (ShelleyEra c))
-       (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_One c))
+       (ShelleyBlock (VoltairePrototypeEra proto c))
 translateTxShelleyToVoltairePrototypeWrapper = InjectTx $
     fmap unComp . eitherToMaybe . runExcept . SL.translateEra () . Comp

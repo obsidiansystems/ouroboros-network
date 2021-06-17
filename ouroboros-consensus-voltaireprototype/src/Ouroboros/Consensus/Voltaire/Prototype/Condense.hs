@@ -19,4 +19,4 @@ import           Ouroboros.Consensus.Voltaire.Prototype.CanHardFork
 
 instance ShelleyBasedEra era => CondenseConstraints (ShelleyBlock era)
 
-instance VoltairePrototypeHardForkConstraints c => CondenseConstraints (VoltairePrototypeBlock c)
+instance VoltairePrototypeHardForkConstraints proto c => CondenseConstraints (VoltairePrototypeBlock proto c)

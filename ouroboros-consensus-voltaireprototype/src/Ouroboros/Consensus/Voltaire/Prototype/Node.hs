@@ -71,11 +71,14 @@ import qualified Shelley.Spec.Ledger.API as SL
 import           Ouroboros.Consensus.Voltaire.Prototype.Block
 import           Ouroboros.Consensus.Voltaire.Prototype.CanHardFork
 
+-- import           Cardano.Ledger.Voltaire.Prototype.Class
+import           Cardano.Ledger.Voltaire.Prototype
+
 {-------------------------------------------------------------------------------
   SerialiseHFC
 -------------------------------------------------------------------------------}
 
-instance VoltairePrototypeHardForkConstraints c => SerialiseHFC (VoltairePrototypeEras c) where
+instance VoltairePrototypeHardForkConstraints 'VoltairePrototype_One c => SerialiseHFC (VoltairePrototypeEras 'VoltairePrototype_One c) where
   encodeDiskHfcBlock (VoltairePrototypeCodecConfig ccfgShelley ccfgVoltairePrototype) = \case
       -- For Shelley and later eras, we need to prepend the hard fork envelope.
       BlockShelley blockShelley -> prependTag 2 $ encodeDisk ccfgShelley blockShelley
@@ -130,7 +133,7 @@ prependTag tag payload = mconcat [
 -------------------------------------------------------------------------------}
 
 -- | The hard fork enabled with the Shelley and VoltairePrototype eras enabled.
-pattern VoltairePrototypeNodeToNodeVersion1 :: BlockNodeToNodeVersion (VoltairePrototypeBlock c)
+pattern VoltairePrototypeNodeToNodeVersion1 :: BlockNodeToNodeVersion (VoltairePrototypeBlock 'VoltairePrototype_One c)
 pattern VoltairePrototypeNodeToNodeVersion1 =
     HardForkNodeToNodeEnabled
       HardForkSpecificNodeToNodeVersion1
@@ -140,7 +143,7 @@ pattern VoltairePrototypeNodeToNodeVersion1 =
       )
 
 -- | The hard fork enabled with the Shelley and VoltairePrototype eras enabled.
-pattern VoltairePrototypeNodeToNodeVersion2 :: BlockNodeToNodeVersion (VoltairePrototypeBlock c)
+pattern VoltairePrototypeNodeToNodeVersion2 :: BlockNodeToNodeVersion (VoltairePrototypeBlock 'VoltairePrototype_One c)
 pattern VoltairePrototypeNodeToNodeVersion2 =
     HardForkNodeToNodeEnabled
       HardForkSpecificNodeToNodeVersion1
@@ -150,7 +153,7 @@ pattern VoltairePrototypeNodeToNodeVersion2 =
       )
 
 -- | The hard fork enabled, and the Shelley era enabled using 'ShelleyNodeToClientVersion3' protocol.
-pattern VoltairePrototypeNodeToClientVersion1 :: BlockNodeToClientVersion (VoltairePrototypeBlock c)
+pattern VoltairePrototypeNodeToClientVersion1 :: BlockNodeToClientVersion (VoltairePrototypeBlock 'VoltairePrototype_One c)
 pattern VoltairePrototypeNodeToClientVersion1 =
     HardForkNodeToClientEnabled
       HardForkSpecificNodeToClientVersion2
@@ -160,7 +163,7 @@ pattern VoltairePrototypeNodeToClientVersion1 =
       )
 
 -- | The hard fork enabled, and the Shelley and VoltairePrototype eras enabled using 'ShelleyNodeToClientVersion3' protocol.
-pattern VoltairePrototypeNodeToClientVersion2 :: BlockNodeToClientVersion (VoltairePrototypeBlock c)
+pattern VoltairePrototypeNodeToClientVersion2 :: BlockNodeToClientVersion (VoltairePrototypeBlock 'VoltairePrototype_One c)
 pattern VoltairePrototypeNodeToClientVersion2 =
     HardForkNodeToClientEnabled
       HardForkSpecificNodeToClientVersion2
@@ -169,8 +172,8 @@ pattern VoltairePrototypeNodeToClientVersion2 =
       :* Nil
       )
 
-instance VoltairePrototypeHardForkConstraints c
-      => SupportedNetworkProtocolVersion (VoltairePrototypeBlock c) where
+instance VoltairePrototypeHardForkConstraints 'VoltairePrototype_One c
+      => SupportedNetworkProtocolVersion (VoltairePrototypeBlock 'VoltairePrototype_One c) where
   supportedNodeToNodeVersions _ = Map.fromList $
       [ (NodeToNodeV_3, VoltairePrototypeNodeToNodeVersion1)
       , (NodeToNodeV_3, VoltairePrototypeNodeToNodeVersion2)
@@ -209,14 +212,14 @@ data ProtocolParamsVoltairePrototype = ProtocolParamsVoltairePrototype {
 -- PRECONDITION: only a single set of Shelley credentials is allowed when used
 -- for mainnet (check against @'SL.gNetworkId' 'shelleyBasedGenesis'@).
 protocolInfoVoltairePrototype ::
-     forall c m. (IOLike m, VoltairePrototypeHardForkConstraints c)
+     forall c m. (IOLike m, VoltairePrototypeHardForkConstraints 'VoltairePrototype_One c {-, VoltaireClass (VoltairePrototypeEra 'VoltairePrototype_One c) -})
   => ProtocolParamsShelleyBased (ShelleyEra c)
   -> ProtocolParamsShelley
   -> ProtocolParamsVoltairePrototype
   -> ProtocolParamsTransition
        (ShelleyBlock (ShelleyEra c))
-       (ShelleyBlock (VoltairePrototypeEraOne c))
-  -> ProtocolInfo m (VoltairePrototypeBlock c)
+       (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_One c))
+  -> ProtocolInfo m (VoltairePrototypeBlock 'VoltairePrototype_One c)
 protocolInfoVoltairePrototype ProtocolParamsShelleyBased {
                         shelleyBasedGenesis           = genesisShelley
                       , shelleyBasedInitialNonce      = initialNonceShelley
@@ -279,10 +282,10 @@ protocolInfoVoltairePrototype ProtocolParamsShelleyBased {
 
     -- Allegra
 
-    genesisVoltairePrototype :: ShelleyGenesis (VoltairePrototypeEraOne c)
+    genesisVoltairePrototype :: ShelleyGenesis (VoltairePrototypeEra 'VoltairePrototype_One c)
     genesisVoltairePrototype = SL.translateEra' () genesisShelley
 
-    blockConfigVoltairePrototype :: BlockConfig (ShelleyBlock (VoltairePrototypeEraOne c))
+    blockConfigVoltairePrototype :: BlockConfig (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_One c))
     blockConfigVoltairePrototype =
         Shelley.mkShelleyBlockConfig
           protVerVoltairePrototype
@@ -290,10 +293,10 @@ protocolInfoVoltairePrototype ProtocolParamsShelleyBased {
           (tpraosBlockIssuerVKey <$> credssShelleyBased)
 
     partialConsensusConfigVoltairePrototype ::
-         PartialConsensusConfig (BlockProtocol (ShelleyBlock (VoltairePrototypeEraOne c)))
+         PartialConsensusConfig (BlockProtocol (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_One c)))
     partialConsensusConfigVoltairePrototype = tpraosParams
 
-    partialLedgerConfigVoltairePrototype :: PartialLedgerConfig (ShelleyBlock (VoltairePrototypeEraOne c))
+    partialLedgerConfigVoltairePrototype :: PartialLedgerConfig (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_One c))
     partialLedgerConfigVoltairePrototype =
         mkPartialLedgerConfigShelley
           genesisVoltairePrototype
@@ -305,13 +308,13 @@ protocolInfoVoltairePrototype ProtocolParamsShelleyBased {
     k :: SecurityParam
     k = kShelley
 
-    shape :: History.Shape (VoltairePrototypeEras c)
+    shape :: History.Shape (VoltairePrototypeEras 'VoltairePrototype_One c)
     shape = History.Shape $ Exactly $
            K (Shelley.shelleyEraParams genesisShelley)
         :* K (Shelley.shelleyEraParams genesisVoltairePrototype)
         :* Nil
 
-    cfg :: TopLevelConfig (VoltairePrototypeBlock c)
+    cfg :: TopLevelConfig (VoltairePrototypeBlock 'VoltairePrototype_One c)
     cfg = TopLevelConfig {
         topLevelConfigProtocol = HardForkConsensusConfig {
             hardForkConsensusConfigK      = k
@@ -346,14 +349,14 @@ protocolInfoVoltairePrototype ProtocolParamsShelleyBased {
 
     -- Register the initial staking and initial funds (if provided in the genesis config) in
     -- the ledger state.
-    initExtLedgerStateVoltairePrototype :: ExtLedgerState (VoltairePrototypeBlock c)
+    initExtLedgerStateVoltairePrototype :: ExtLedgerState (VoltairePrototypeBlock 'VoltairePrototype_One c)
     initExtLedgerStateVoltairePrototype = ExtLedgerState {
           headerState = initHeaderState
         , ledgerState = overShelleyBasedLedgerState register initLedgerState
         }
       where
-        initHeaderState :: HeaderState (VoltairePrototypeBlock c)
-        initLedgerState :: LedgerState (VoltairePrototypeBlock c)
+        initHeaderState :: HeaderState (VoltairePrototypeBlock 'VoltairePrototype_One c)
+        initLedgerState :: LedgerState (VoltairePrototypeBlock 'VoltairePrototype_One c)
         ExtLedgerState initLedgerState initHeaderState =
           injectInitialExtLedgerState cfg $ ExtLedgerState {
             ledgerState = Shelley.ShelleyLedgerState {
@@ -421,26 +424,26 @@ protocolInfoVoltairePrototype ProtocolParamsShelleyBased {
     -- In case there are multiple credentials for Shelley, which is only done
     -- for testing/benchmarking purposes, we'll have a separate thread for each
     -- of them.
-    blockForging :: m [BlockForging m (VoltairePrototypeBlock c)]
+    blockForging :: m [BlockForging m (VoltairePrototypeBlock 'VoltairePrototype_One c)]
     blockForging = do
-        shelleyBased :: [ OptNP 'False (BlockForging m) (VoltairePrototypeEras c) ] <- blockForgingShelleyBased
+        shelleyBased :: [ OptNP 'False (BlockForging m) (VoltairePrototypeEras 'VoltairePrototype_One c) ] <- blockForgingShelleyBased
         return $ hardForkBlockForging "VoltairePrototype" <$> shelleyBased
 
-    blockForgingShelleyBased :: m [OptNP 'False (BlockForging m) (VoltairePrototypeEras c)]
+    blockForgingShelleyBased :: m [OptNP 'False (BlockForging m) (VoltairePrototypeEras 'VoltairePrototype_One c)]
     blockForgingShelleyBased = do
         shelleyBased <-
           traverse
-            (shelleySharedBlockForging (Proxy @(ShelleyBasedVoltairePrototypeEras c)) tpraosParams)
+            (shelleySharedBlockForging (Proxy @(ShelleyBasedVoltairePrototypeEras 'VoltairePrototype_One c)) tpraosParams)
             credssShelleyBased
         return $ reassoc <$> shelleyBased
       where
         reassoc ::
-             NP (BlockForging m :.: ShelleyBlock) (ShelleyBasedVoltairePrototypeEras c)
-          -> OptNP 'False (BlockForging m) (VoltairePrototypeEras c)
+             NP (BlockForging m :.: ShelleyBlock) (ShelleyBasedVoltairePrototypeEras 'VoltairePrototype_One c)
+          -> OptNP 'False (BlockForging m) (VoltairePrototypeEras 'VoltairePrototype_One c)
         reassoc = injectShelleyOptNP unComp . OptNP.fromNonEmptyNP
 
 protocolClientInfoVoltairePrototype
-  :: forall c.  ProtocolClientInfo (VoltairePrototypeBlock c)
+  :: forall c.  ProtocolClientInfo (VoltairePrototypeBlock 'VoltairePrototype_One c)
 protocolClientInfoVoltairePrototype = ProtocolClientInfo {
       pClientInfoCodecConfig =
         VoltairePrototypeCodecConfig
