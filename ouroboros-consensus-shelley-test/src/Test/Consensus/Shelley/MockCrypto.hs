@@ -20,7 +20,7 @@ import           Cardano.Crypto.KES (MockKES)
 
 import qualified Cardano.Ledger.Core as Core
 import           Cardano.Ledger.Crypto (Crypto (..))
-import           Control.State.Transition.Extended (PredicateFailure)
+import           Control.State.Transition.Extended (PredicateFailure, STS (State))
 import qualified Shelley.Spec.Ledger.API as SL
 import qualified Shelley.Spec.Ledger.Tx as SL (ValidateScript)
 
@@ -57,6 +57,7 @@ type Block h = ShelleyBlock (MockShelley h)
 -- | Cryptography that can easily be mocked
 type CanMock era =
   ( ShelleyBasedEra era
+  , Arbitrary (State (Core.EraRule "PPUP" era))
   , SL.EraGen era
   , SL.Mock (EraCrypto era)
   , SL.ValidateScript era
