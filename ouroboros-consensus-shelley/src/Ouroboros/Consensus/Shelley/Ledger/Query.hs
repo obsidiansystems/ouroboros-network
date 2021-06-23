@@ -10,6 +10,8 @@
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TypeFamilies               #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE UndecidableInstances       #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 module Ouroboros.Consensus.Shelley.Ledger.Query (
     NonMyopicMemberRewards (..)
@@ -51,13 +53,14 @@ import qualified Shelley.Spec.Ledger.API as SL
 import qualified Shelley.Spec.Ledger.LedgerState as SL (RewardAccounts)
 import qualified Shelley.Spec.Ledger.RewardProvenance as SL (RewardProvenance)
 
-import           Ouroboros.Consensus.Shelley.Eras (EraCrypto, WithShelleyUpdates)
+import           Ouroboros.Consensus.Shelley.Eras (EraCrypto)
 import           Ouroboros.Consensus.Shelley.Ledger.Block
 import           Ouroboros.Consensus.Shelley.Ledger.Config
 import           Ouroboros.Consensus.Shelley.Ledger.Ledger
 import           Ouroboros.Consensus.Shelley.Ledger.NetworkProtocolVersion
                      (ShelleyNodeToClientVersion (..))
 import           Ouroboros.Consensus.Shelley.Protocol (TPraosState (..))
+import           Ouroboros.Consensus.Shelley.Update (HasProtocolUpdates(..))
 
 {-------------------------------------------------------------------------------
   QueryLedger
@@ -90,7 +93,7 @@ data instance Query (ShelleyBlock era) :: Type -> Type where
   GetCurrentPParams
     :: Query (ShelleyBlock era) (LC.PParams era)
   GetProposedPParamsUpdates
-    :: Query (ShelleyBlock era) (SL.ProposedPPUpdates era)
+    :: Query (ShelleyBlock era) (ProposedProtocolUpdates era)
   -- | This gets the stake distribution, but not in terms of _active_ stake
   -- (which we need for the leader schedule), but rather in terms of _total_
   -- stake, which is relevant for rewards. It is used by the wallet to show
@@ -164,7 +167,7 @@ data instance Query (ShelleyBlock era) :: Type -> Type where
 
 instance Typeable era => ShowProxy (Query (ShelleyBlock era)) where
 
-instance (ShelleyBasedEra era, WithShelleyUpdates era) => QueryLedger (ShelleyBlock era) where
+instance (ShelleyBasedEra era, HasProtocolUpdates era) => QueryLedger (ShelleyBlock era) where
   answerQuery cfg query ext =
       case query of
         GetLedgerTip ->
@@ -177,7 +180,7 @@ instance (ShelleyBasedEra era, WithShelleyUpdates era) => QueryLedger (ShelleyBl
         GetCurrentPParams ->
           getPParams st
         GetProposedPParamsUpdates ->
-          getProposedPPUpdates st
+          getProposedProtocolUpdates st
         GetStakeDistribution ->
           SL.poolsByTotalStakeFraction globals st
         GetFilteredUTxO addrs ->
@@ -288,7 +291,9 @@ instance SameDepIndex (Query (ShelleyBlock era)) where
 deriving instance Eq   (Query (ShelleyBlock era) result)
 deriving instance Show (Query (ShelleyBlock era) result)
 
-instance ShelleyBasedEra era => ShowQuery (Query (ShelleyBlock era)) where
+instance ( ShelleyBasedEra era
+         , Show (ProposedProtocolUpdates era)
+         ) => ShowQuery (Query (ShelleyBlock era)) where
   showResult = \case
       GetLedgerTip                               -> show
       GetEpochNo                                 -> show
@@ -334,12 +339,6 @@ querySupportedVersion = \case
 {-------------------------------------------------------------------------------
   Auxiliary
 -------------------------------------------------------------------------------}
-
-getProposedPPUpdates ::
-     (ShelleyBasedEra era, WithShelleyUpdates era)
-  => SL.NewEpochState era -> SL.ProposedPPUpdates era
-getProposedPPUpdates = SL.proposals . SL._ppups
-                     . SL._utxoState . SL.esLState . SL.nesEs
 
 -- Get the current 'EpochState.' This is mainly for debugging.
 getEpochState :: SL.NewEpochState era -> SL.EpochState era
@@ -425,7 +424,7 @@ decodeShelleyQuery = do
         show len <> ", " <> show tag <> ")"
 
 encodeShelleyResult ::
-     ShelleyBasedEra era
+     (ShelleyBasedEra era, ToCBOR (ProposedProtocolUpdates era))
   => Query (ShelleyBlock era) result -> result -> Encoding
 encodeShelleyResult query = case query of
     GetLedgerTip                               -> encodePoint encode
@@ -445,7 +444,7 @@ encodeShelleyResult query = case query of
     GetRewardProvenance                        -> toCBOR
 
 decodeShelleyResult ::
-     ShelleyBasedEra era
+     (ShelleyBasedEra era, FromCBOR (ProposedProtocolUpdates era))
   => Query (ShelleyBlock era) result
   -> forall s. Decoder s result
 decodeShelleyResult query = case query of

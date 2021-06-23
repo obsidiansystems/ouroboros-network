@@ -21,6 +21,9 @@ module Ouroboros.Consensus.Example.Eras (
   ) where
 
 import           Cardano.Ledger.Example (ExampleEra)
+import Ouroboros.Consensus.Shelley.Update
+    (protocolUpdatesShelley, HasProtocolUpdates(..))
+import qualified Ouroboros.Consensus.Shelley.Update.Shelley as Shelley
 
 import           Ouroboros.Consensus.Shelley.Eras
 import qualified Shelley.Spec.Ledger.API as SL
@@ -34,3 +37,9 @@ type StandardExample = ExampleEra StandardCrypto
 
 instance SL.PraosCrypto c => ShelleyBasedEra (ExampleEra c) where
   shelleyBasedEraName _ = "Example"
+
+instance SL.PraosCrypto c => HasProtocolUpdates (ExampleEra c) where
+  type ProposedProtocolUpdates (ExampleEra c) = SL.ProposedPPUpdates (ExampleEra c)
+  protocolUpdates = protocolUpdatesShelley
+  getProposedProtocolUpdates = Shelley.getProposedPPUpdates
+  exampleProposedProtocolUpdates _ = Shelley.exampleProposedProtocolUpdatesShelley

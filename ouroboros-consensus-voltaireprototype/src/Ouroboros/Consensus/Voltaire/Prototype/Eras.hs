@@ -23,7 +23,10 @@ module Ouroboros.Consensus.Voltaire.Prototype.Eras (
 
 import           Cardano.Ledger.Voltaire.Prototype (VoltairePrototype(..), VoltairePrototypeEra)
 
+import qualified Ouroboros.Consensus.Shelley.Update.Shelley as Shelley
 import           Ouroboros.Consensus.Shelley.Eras
+import           Ouroboros.Consensus.Shelley.Update
+    (protocolUpdatesShelley, HasProtocolUpdates(..))
 import qualified Shelley.Spec.Ledger.API as SL
 
 {-------------------------------------------------------------------------------
@@ -40,3 +43,10 @@ instance SL.PraosCrypto c => SL.ShelleyBasedEra (VoltairePrototypeEra 'VoltaireP
 instance SL.PraosCrypto c => SL.ApplyBlock (VoltairePrototypeEra 'VoltairePrototype_One c)
 instance SL.PraosCrypto c => SL.ApplyTx (VoltairePrototypeEra 'VoltairePrototype_One c)
 instance SL.PraosCrypto c => SL.GetLedgerView (VoltairePrototypeEra 'VoltairePrototype_One c)
+
+instance SL.PraosCrypto c => HasProtocolUpdates (VoltairePrototypeEra 'VoltairePrototype_One c) where
+  type ProposedProtocolUpdates (VoltairePrototypeEra 'VoltairePrototype_One c)
+    = SL.ProposedPPUpdates (VoltairePrototypeEra 'VoltairePrototype_One c)
+  protocolUpdates = protocolUpdatesShelley
+  getProposedProtocolUpdates = Shelley.getProposedPPUpdates
+  exampleProposedProtocolUpdates _ = Shelley.exampleProposedProtocolUpdatesShelley

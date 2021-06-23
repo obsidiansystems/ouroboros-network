@@ -81,6 +81,7 @@ import           Ouroboros.Consensus.Shelley.Node.Serialisation ()
 import           Ouroboros.Consensus.Shelley.Protocol
 import           Ouroboros.Consensus.Shelley.Protocol.HotKey (HotKey)
 import qualified Ouroboros.Consensus.Shelley.Protocol.HotKey as HotKey
+import           Ouroboros.Consensus.Shelley.Update (HasProtocolUpdates)
 
 {-------------------------------------------------------------------------------
   Credentials
@@ -378,7 +379,7 @@ instance ShelleyBasedEra era => BlockSupportsMetrics (ShelleyBlock era) where
          SelfIssued    -> IsSelfIssued
          NotSelfIssued -> IsNotSelfIssued
 
-instance (ShelleyBasedEra era, WithShelleyUpdates era) => RunNode (ShelleyBlock era)
+instance (ShelleyBasedEra era, HasProtocolUpdates era) => RunNode (ShelleyBlock era)
 
 {-------------------------------------------------------------------------------
   Register genesis staking

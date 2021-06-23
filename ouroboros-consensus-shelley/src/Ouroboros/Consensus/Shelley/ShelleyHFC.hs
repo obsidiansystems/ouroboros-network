@@ -54,6 +54,7 @@ import           Ouroboros.Consensus.Shelley.Ledger
 import           Ouroboros.Consensus.Shelley.Ledger.Inspect as Shelley.Inspect
 import           Ouroboros.Consensus.Shelley.Node ()
 import           Ouroboros.Consensus.Shelley.Protocol
+import           Ouroboros.Consensus.Shelley.Update (HasProtocolUpdates)
 
 {-------------------------------------------------------------------------------
   Synonym for convenience
@@ -66,7 +67,7 @@ type ShelleyBlockHFC era = HardForkBlock '[ShelleyBlock era]
   NoHardForks instance
 -------------------------------------------------------------------------------}
 
-instance (WithShelleyUpdates era, ShelleyBasedEra era) => NoHardForks (ShelleyBlock era) where
+instance (HasProtocolUpdates era, ShelleyBasedEra era) => NoHardForks (ShelleyBlock era) where
   getEraParams =
         shelleyEraParamsNeverHardForks
       . shelleyLedgerGenesis
@@ -84,7 +85,7 @@ instance (WithShelleyUpdates era, ShelleyBasedEra era) => NoHardForks (ShelleyBl
 -- | Forward to the ShelleyBlock instance. Only supports
 -- 'HardForkNodeToNodeDisabled', which is compatible with nodes running with
 -- 'ShelleyBlock'.
-instance (WithShelleyUpdates era, ShelleyBasedEra era)
+instance (HasProtocolUpdates era, ShelleyBasedEra era)
       => SupportedNetworkProtocolVersion (ShelleyBlockHFC era) where
   supportedNodeToNodeVersions _ =
       Map.map HardForkNodeToNodeDisabled $
@@ -103,8 +104,8 @@ instance (WithShelleyUpdates era, ShelleyBasedEra era)
 -- | Use the default implementations. This means the serialisation of blocks
 -- includes an era wrapper. Each block should do this from the start to be
 -- prepared for future hard forks without having to do any bit twiddling.
-instance (WithShelleyUpdates era, ShelleyBasedEra era) => SerialiseHFC '[ShelleyBlock era]
-instance (WithShelleyUpdates era, ShelleyBasedEra era) => SerialiseConstraintsHFC (ShelleyBlock era)
+instance (HasProtocolUpdates era, ShelleyBasedEra era) => SerialiseHFC '[ShelleyBlock era]
+instance (HasProtocolUpdates era, ShelleyBasedEra era) => SerialiseConstraintsHFC (ShelleyBlock era)
 
 {-------------------------------------------------------------------------------
   Protocol type definition
@@ -117,7 +118,7 @@ type ProtocolShelley = HardForkProtocol '[ ShelleyBlock StandardShelley ]
 -------------------------------------------------------------------------------}
 
 shelleyTransition ::
-     forall era. (WithShelleyUpdates era, ShelleyBasedEra era)
+     forall era. (HasProtocolUpdates era)
   => PartialLedgerConfig (ShelleyBlock era)
   -> Word16   -- ^ Next era's major protocol version
   -> LedgerState (ShelleyBlock era)
@@ -158,7 +159,7 @@ shelleyTransition ShelleyPartialLedgerConfig{..}
     takeAny :: [a] -> Maybe a
     takeAny = listToMaybe
 
-instance (WithShelleyUpdates era, ShelleyBasedEra era) => SingleEraBlock (ShelleyBlock era) where
+instance (HasProtocolUpdates era, ShelleyBasedEra era) => SingleEraBlock (ShelleyBlock era) where
   singleEraTransition pcfg _eraParams _eraStart ledgerState =
       case shelleyTriggerHardFork pcfg of
         TriggerHardForkNever                         -> Nothing

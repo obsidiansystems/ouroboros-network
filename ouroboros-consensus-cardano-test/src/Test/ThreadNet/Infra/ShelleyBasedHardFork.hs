@@ -50,6 +50,7 @@ import           Ouroboros.Consensus.Shelley.Eras
 import           Ouroboros.Consensus.Shelley.Ledger
 import           Ouroboros.Consensus.Shelley.Node
 import           Ouroboros.Consensus.Shelley.Protocol
+import           Ouroboros.Consensus.Shelley.Update (HasProtocolUpdates)
 
 import           Ouroboros.Consensus.Cardano.CanHardFork
                      (ShelleyPartialLedgerConfig (..), forecastAcrossShelley,
@@ -117,8 +118,8 @@ pattern ShelleyBasedHardForkNodeToClientVersion1 =
 type ShelleyBasedHardForkConstraints era1 era2 =
   ( ShelleyBasedEra era1
   , ShelleyBasedEra era2
-  , WithShelleyUpdates era1
-  , WithShelleyUpdates era2
+  , HasProtocolUpdates era1
+  , HasProtocolUpdates era2
   , EraCrypto era1 ~ EraCrypto era2
   , SL.PreviousEra era2 ~ era1
 

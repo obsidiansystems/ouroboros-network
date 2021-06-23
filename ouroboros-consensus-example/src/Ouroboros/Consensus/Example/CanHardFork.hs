@@ -48,7 +48,6 @@ import qualified Cardano.Ledger.Era as SL
 import           Cardano.Ledger.Example.Translation ()
 
 import           Ouroboros.Consensus.Example.Block
-import Ouroboros.Consensus.Shelley.Eras (WithShelleyUpdates)
 
 {-------------------------------------------------------------------------------
   CanHardFork
@@ -59,8 +58,6 @@ type ExampleHardForkConstraints c =
   , ShelleyBasedEra (ShelleyEra c)
   , ShelleyBasedEra (ExampleEra c)
   )
-
-instance PraosCrypto c => WithShelleyUpdates (ExampleEra c)
 
 instance ExampleHardForkConstraints c => CanHardFork (ExampleEras c) where
   hardForkEraTranslation = EraTranslation {

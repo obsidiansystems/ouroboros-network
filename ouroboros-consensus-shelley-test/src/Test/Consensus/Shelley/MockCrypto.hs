@@ -14,6 +14,7 @@ module Test.Consensus.Shelley.MockCrypto (
 
 import           Test.QuickCheck (Arbitrary)
 
+import           Cardano.Binary (ToCBOR)
 import           Cardano.Crypto.DSIGN (MockDSIGN)
 import           Cardano.Crypto.Hash (HashAlgorithm)
 import           Cardano.Crypto.KES (MockKES)
@@ -32,6 +33,7 @@ import           Ouroboros.Consensus.Shelley.Eras (EraCrypto, ShelleyBasedEra,
                      ShelleyEra)
 import           Ouroboros.Consensus.Shelley.Ledger (ShelleyBlock)
 import           Ouroboros.Consensus.Shelley.Protocol.Crypto (PraosCrypto)
+import           Ouroboros.Consensus.Shelley.Update
 
 -- | A mock replacement for 'StandardCrypto'
 --
@@ -58,6 +60,10 @@ type Block h = ShelleyBlock (MockShelley h)
 type CanMock era =
   ( ShelleyBasedEra era
   , Arbitrary (State (Core.EraRule "PPUP" era))
+  , Arbitrary (ProposedProtocolUpdates era)
+  , Eq (ProposedProtocolUpdates era)
+  , Show (ProposedProtocolUpdates era)
+  , ToCBOR (ProposedProtocolUpdates era)
   , SL.EraGen era
   , SL.Mock (EraCrypto era)
   , SL.ValidateScript era

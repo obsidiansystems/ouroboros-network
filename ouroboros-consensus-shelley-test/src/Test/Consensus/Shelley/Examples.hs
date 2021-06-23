@@ -115,6 +115,8 @@ import           Ouroboros.Consensus.Shelley.Eras
 import           Ouroboros.Consensus.Shelley.Ledger
 import           Ouroboros.Consensus.Shelley.Protocol (PraosCrypto, TPraos,
                      TPraosState (..))
+import           Ouroboros.Consensus.Shelley.Update
+                    (HasProtocolUpdates(exampleProposedProtocolUpdates))
 
 import           Test.Util.Orphans.Arbitrary ()
 import           Test.Util.Serialisation.Golden (labelled, unlabelled)
@@ -209,10 +211,10 @@ keyToCredential = SL.KeyHashObj . SL.hashKey . SL.vKey
 examples ::
      forall era.
      ( ShelleyBasedEra era
+     , HasProtocolUpdates era
      ,   SL.PredicateFailure (Core.EraRule "DELEGS" era)
        ~ SL.DelegsPredicateFailure era
      , Core.PParams era ~ SL.PParams era
-     , SL.PParamsDelta era ~ SL.PParams' StrictMaybe era
      )
   => Core.Value era
   -> Core.TxBody era
@@ -258,7 +260,7 @@ examples value txBody auxiliaryData = Golden.Examples {
           ("LedgerTip",              SomeResult GetLedgerTip (blockPoint blk))
         , ("EpochNo",                SomeResult GetEpochNo 10)
         , ("EmptyPParams",           SomeResult GetCurrentPParams def)
-        , ("ProposedPParamsUpdates", SomeResult GetProposedPParamsUpdates proposedPParamsUpdates)
+        , ("ProposedPParamsUpdates", SomeResult GetProposedPParamsUpdates (exampleProposedProtocolUpdates (Proxy :: Proxy era)))
         , ("StakeDistribution",      SomeResult GetStakeDistribution examplePoolDistr)
         , ("NonMyopicMemberRewards", SomeResult (GetNonMyopicMemberRewards Set.empty)
             (NonMyopicMemberRewards $ Map.fromList [
@@ -268,11 +270,6 @@ examples value txBody auxiliaryData = Golden.Examples {
               ]))
         , ("GenesisConfig",          SomeResult GetGenesisConfig (compactGenesis testShelleyGenesis))
         ]
-
-    proposedPParamsUpdates :: SL.ProposedPPUpdates era
-    proposedPParamsUpdates = SL.ProposedPPUpdates $ Map.singleton
-        (mkKeyHash 0)
-        (SL.emptyPParamsUpdate {SL._keyDeposit = SJust (SL.Coin 100)})
 
 examplesShelley :: Golden.Examples (ShelleyBlock StandardShelley)
 examplesShelley =

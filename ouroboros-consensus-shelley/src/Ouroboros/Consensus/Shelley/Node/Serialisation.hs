@@ -28,6 +28,7 @@ import           Ouroboros.Consensus.Shelley.Eras (EraCrypto)
 import           Ouroboros.Consensus.Shelley.Ledger
 import           Ouroboros.Consensus.Shelley.Ledger.NetworkProtocolVersion ()
 import           Ouroboros.Consensus.Shelley.Protocol
+import           Ouroboros.Consensus.Shelley.Update (HasProtocolUpdates)
 
 {-------------------------------------------------------------------------------
   EncodeDisk & DecodeDisk
@@ -128,7 +129,7 @@ data ShelleyEncoderException era =
 
 instance Typeable era => Exception (ShelleyEncoderException era)
 
-instance ShelleyBasedEra era => SerialiseNodeToClientConstraints (ShelleyBlock era)
+instance (ShelleyBasedEra era, HasProtocolUpdates era) => SerialiseNodeToClientConstraints (ShelleyBlock era)
 
 -- | CBOR-in-CBOR for the annotation. This also makes it compatible with the
 -- wrapped ('Serialised') variant.
@@ -159,7 +160,9 @@ instance ShelleyBasedEra era
     = throw $ ShelleyEncoderUnsupportedQuery (SomeSecond q) version
   decodeNodeToClient _ _ = decodeShelleyQuery
 
-instance ShelleyBasedEra era => SerialiseResult (ShelleyBlock era) (Query (ShelleyBlock era)) where
+instance ( ShelleyBasedEra era
+         , HasProtocolUpdates era
+         ) => SerialiseResult (ShelleyBlock era) (Query (ShelleyBlock era)) where
   encodeResult _ _ = encodeShelleyResult
   decodeResult _ _ = decodeShelleyResult
 

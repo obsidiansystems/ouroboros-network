@@ -44,15 +44,14 @@ import           Ouroboros.Consensus.Shelley.Ledger
 import           Ouroboros.Consensus.Shelley.Node (ShelleyGenesis)
 import           Ouroboros.Consensus.Shelley.Protocol
 import           Ouroboros.Consensus.Shelley.ShelleyHFC
-import           Ouroboros.Consensus.Shelley.Eras (WithShelleyUpdates)
 
 import qualified Cardano.Ledger.Era as SL
 import           Cardano.Ledger.Tx (Tx)
 
 import           Ouroboros.Consensus.Voltaire.Prototype.Block
 import           Cardano.Ledger.Voltaire.Prototype.Class
-import           Cardano.Ledger.Voltaire.Prototype (VoltairePrototype(VoltairePrototype_One))
 import           Shelley.Spec.Ledger.LedgerState (NewEpochState)
+import Ouroboros.Consensus.Shelley.Update (HasProtocolUpdates)
 
 {-------------------------------------------------------------------------------
   CanHardFork
@@ -72,9 +71,7 @@ type VoltairePrototypeHardForkConstraints proto c =
   , SL.TranslateEra (VoltairePrototypeEra proto c) ShelleyGenesis
   )
 
-instance WithShelleyUpdates (VoltairePrototypeEra 'VoltairePrototype_One c)
-
-instance (VoltairePrototypeHardForkConstraints proto c, WithShelleyUpdates (VoltairePrototypeEra proto c)) => CanHardFork (VoltairePrototypeEras proto c) where
+instance (VoltairePrototypeHardForkConstraints proto c, HasProtocolUpdates (VoltairePrototypeEra proto c)) => CanHardFork (VoltairePrototypeEras proto c) where
   hardForkEraTranslation = EraTranslation {
       translateLedgerState   =
           PCons translateLedgerStateShelleyToVoltairePrototypeWrapper

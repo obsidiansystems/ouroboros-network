@@ -19,7 +19,6 @@ module Ouroboros.Consensus.Shelley.Eras (
   , EraCrypto
     -- * Re-exports
   , StandardCrypto
-  , WithShelleyUpdates
   ) where
 
 import           Data.Default.Class (Default)
@@ -125,14 +124,3 @@ instance SL.PraosCrypto c => ShelleyBasedEra (AllegraEra c) where
 
 instance SL.PraosCrypto c => ShelleyBasedEra (MaryEra c) where
   shelleyBasedEraName _ = "Mary"
-
-class 
-      ( State (LC.EraRule "PPUP" era) ~ SL.PPUPState era
-      ) => WithShelleyUpdates era
-
-instance SL.PraosCrypto c => WithShelleyUpdates (ShelleyEra c) where
-
-instance SL.PraosCrypto c => WithShelleyUpdates (AllegraEra c) where
-
-instance SL.PraosCrypto c => WithShelleyUpdates (MaryEra c) where
-
