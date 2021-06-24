@@ -14,6 +14,7 @@ module Ouroboros.Consensus.Voltaire.Prototype.Eras (
     -- * Eras instantiated with standard crypto
   , StandardVoltairePrototype
     -- * Re-exports
+  , VoltairePrototype(..)
   , EraCrypto
   , ShelleyBasedEra (..)
   , ShelleyEra
@@ -24,6 +25,7 @@ module Ouroboros.Consensus.Voltaire.Prototype.Eras (
 import           Cardano.Ledger.Voltaire.Prototype (VoltairePrototype(..), VoltairePrototypeEra)
 
 import qualified Ouroboros.Consensus.Shelley.Update.Shelley as Shelley
+import qualified Ouroboros.Consensus.Voltaire.Prototype.Update as Two
 import           Ouroboros.Consensus.Shelley.Eras
 import           Ouroboros.Consensus.Shelley.Update
     (protocolUpdatesShelley, HasProtocolUpdates(..))
@@ -36,17 +38,35 @@ import qualified Shelley.Spec.Ledger.API as SL
 -- | The VoltairePrototype era with standard crypto
 type StandardVoltairePrototype = VoltairePrototypeEra 'VoltairePrototype_One StandardCrypto
 
-instance (SL.PraosCrypto c {-, PpupState(VoltairePrototypeEra proto c) ~ SL.PPupState (VoltairePrototypeEra proto c), VoltaireClass (VoltairePrototypeEra proto c) -}) => ShelleyBasedEra (VoltairePrototypeEra 'VoltairePrototype_One c) where
-  shelleyBasedEraName _ = "VoltairePrototype"
+instance (SL.PraosCrypto c) => ShelleyBasedEra (VoltairePrototypeEra 'VoltairePrototype_One c) where
+  shelleyBasedEraName _ = "VoltairePrototypeOne"
+instance (SL.PraosCrypto c) => ShelleyBasedEra (VoltairePrototypeEra 'VoltairePrototype_Two c) where
+  shelleyBasedEraName _ = "VoltairePrototypeTwo"
 
 instance SL.PraosCrypto c => SL.ShelleyBasedEra (VoltairePrototypeEra 'VoltairePrototype_One c)
 instance SL.PraosCrypto c => SL.ApplyBlock (VoltairePrototypeEra 'VoltairePrototype_One c)
 instance SL.PraosCrypto c => SL.ApplyTx (VoltairePrototypeEra 'VoltairePrototype_One c)
 instance SL.PraosCrypto c => SL.GetLedgerView (VoltairePrototypeEra 'VoltairePrototype_One c)
 
+instance SL.PraosCrypto c => SL.ShelleyBasedEra (VoltairePrototypeEra 'VoltairePrototype_Two c)
+instance SL.PraosCrypto c => SL.ApplyBlock (VoltairePrototypeEra 'VoltairePrototype_Two c)
+instance SL.PraosCrypto c => SL.ApplyTx (VoltairePrototypeEra 'VoltairePrototype_Two c)
+instance SL.PraosCrypto c => SL.GetLedgerView (VoltairePrototypeEra 'VoltairePrototype_Two c)
+
 instance SL.PraosCrypto c => HasProtocolUpdates (VoltairePrototypeEra 'VoltairePrototype_One c) where
   type ProposedProtocolUpdates (VoltairePrototypeEra 'VoltairePrototype_One c)
     = SL.ProposedPPUpdates (VoltairePrototypeEra 'VoltairePrototype_One c)
-  protocolUpdates = protocolUpdatesShelley
+  protocolUpdates genesis st =
+    let (proposalsInv, quorum, currentEpoch) = Shelley.protocolUpdatesShelley genesis st
+    in protocolUpdatesShelley proposalsInv quorum currentEpoch
   getProposedProtocolUpdates = Shelley.getProposedPPUpdates
   exampleProposedProtocolUpdates _ = Shelley.exampleProposedProtocolUpdatesShelley
+
+instance SL.PraosCrypto c => HasProtocolUpdates (VoltairePrototypeEra 'VoltairePrototype_Two c) where
+  type ProposedProtocolUpdates (VoltairePrototypeEra 'VoltairePrototype_Two c)
+    = Two.ProposedUpdates (VoltairePrototypeEra 'VoltairePrototype_Two c)
+  protocolUpdates genesis st =
+    let (proposalsInv, quorum, currentEpoch) = Two.protocolUpdates genesis st
+    in protocolUpdatesShelley proposalsInv quorum currentEpoch
+  getProposedProtocolUpdates = Two.getProposedUpdates
+  exampleProposedProtocolUpdates _ = Two.exampleProposedProtocolUpdatesShelley

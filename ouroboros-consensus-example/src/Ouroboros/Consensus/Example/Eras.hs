@@ -40,6 +40,8 @@ instance SL.PraosCrypto c => ShelleyBasedEra (ExampleEra c) where
 
 instance SL.PraosCrypto c => HasProtocolUpdates (ExampleEra c) where
   type ProposedProtocolUpdates (ExampleEra c) = SL.ProposedPPUpdates (ExampleEra c)
-  protocolUpdates = protocolUpdatesShelley
+  protocolUpdates genesis st =
+    let (proposalsInv, quorum, currentEpoch) = Shelley.protocolUpdatesShelley genesis st
+    in protocolUpdatesShelley proposalsInv quorum currentEpoch
   getProposedProtocolUpdates = Shelley.getProposedPPUpdates
   exampleProposedProtocolUpdates _ = Shelley.exampleProposedProtocolUpdatesShelley

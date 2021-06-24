@@ -26,7 +26,6 @@ import qualified Shelley.Spec.Ledger.API as SL
 import           Ouroboros.Consensus.Block ( EpochNo )
 import           Ouroboros.Consensus.Ledger.Abstract ( LedgerState )
 import qualified Cardano.Ledger.Shelley.Constraints as SL
-import qualified Cardano.Ledger.Core as LC
 import           Ouroboros.Consensus.Shelley.Eras (EraCrypto)
 import           Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBasedEra, ShelleyBlock )
@@ -38,8 +37,8 @@ import           Shelley.Spec.Ledger.BaseTypes (strictMaybeToMaybe)
 import           Cardano.Ledger.Allegra (AllegraEra)
 import           Cardano.Ledger.Mary (MaryEra)
 import           Cardano.Ledger.Shelley (ShelleyEra)
-import           Cardano.Prelude (Proxy)
-import           Control.State.Transition (STS(State))
+import           Cardano.Prelude (Proxy, Word64)
+import qualified Cardano.Ledger.Era
 
 data ProtocolUpdate era = ProtocolUpdate {
       protocolUpdateProposal :: UpdateProposal era
@@ -125,28 +124,39 @@ class ( Eq (ProposedProtocolUpdates era)
 
 instance SL.PraosCrypto c => HasProtocolUpdates (ShelleyEra c) where
   type ProposedProtocolUpdates (ShelleyEra c) = SL.ProposedPPUpdates (ShelleyEra c)
-  protocolUpdates = protocolUpdatesShelley
+  protocolUpdates genesis st =
+    let (proposalsInv, quorum, currentEpoch) = Shelley.protocolUpdatesShelley genesis st
+    in protocolUpdatesShelley proposalsInv quorum currentEpoch
   getProposedProtocolUpdates = Shelley.getProposedPPUpdates
   exampleProposedProtocolUpdates _ = Shelley.exampleProposedProtocolUpdatesShelley
 
 instance (SL.PraosCrypto c) => HasProtocolUpdates (AllegraEra c) where
   type ProposedProtocolUpdates (AllegraEra c) = SL.ProposedPPUpdates (AllegraEra c)
-  protocolUpdates = protocolUpdatesShelley
+  protocolUpdates genesis st =
+    let (proposalsInv, quorum, currentEpoch) = Shelley.protocolUpdatesShelley genesis st
+    in protocolUpdatesShelley proposalsInv quorum currentEpoch
   getProposedProtocolUpdates = Shelley.getProposedPPUpdates
   exampleProposedProtocolUpdates _ = Shelley.exampleProposedProtocolUpdatesShelley
 
 instance SL.PraosCrypto c => HasProtocolUpdates (MaryEra c) where
   type ProposedProtocolUpdates (MaryEra c) = SL.ProposedPPUpdates (MaryEra c)
-  protocolUpdates = protocolUpdatesShelley
+  protocolUpdates genesis st =
+    let (proposalsInv, quorum, currentEpoch) = Shelley.protocolUpdatesShelley genesis st
+    in protocolUpdatesShelley proposalsInv quorum currentEpoch
   getProposedProtocolUpdates = Shelley.getProposedPPUpdates
   exampleProposedProtocolUpdates _ = Shelley.exampleProposedProtocolUpdatesShelley
 
 protocolUpdatesShelley ::
-       forall era. (ShelleyBasedEra era, State (LC.EraRule "PPUP" era) ~ SL.PPUPState era)
-    => SL.ShelleyGenesis era
-    -> LedgerState (ShelleyBlock era)
+       forall era. (ShelleyBasedEra era)
+    => ([ ( SL.PParamsDelta era
+          , [SL.KeyHash 'SL.Genesis (Cardano.Ledger.Era.Crypto era)]
+          )
+        ]
+       )
+    -> Word64
+    -> EpochNo
     -> [ProtocolUpdate era]
-protocolUpdatesShelley genesis st = [
+protocolUpdatesShelley proposalsInv quorum currentEpoch = [
       ProtocolUpdate {
           protocolUpdateProposal = UpdateProposal {
               proposalParams  = proposal
@@ -161,5 +171,3 @@ protocolUpdatesShelley genesis st = [
         }
     | (proposal, votes) <- proposalsInv
     ]
-  where
-    (proposalsInv, quorum, currentEpoch) = Shelley.protocolUpdatesShelley genesis st
