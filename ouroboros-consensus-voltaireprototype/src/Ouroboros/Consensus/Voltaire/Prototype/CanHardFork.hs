@@ -60,6 +60,7 @@ import Ouroboros.Consensus.Shelley.Update (HasProtocolUpdates)
 type VoltairePrototypeHardForkConstraints proto c =
   ( PraosCrypto c
   , VoltaireClass (VoltairePrototypeEra proto c)
+  , HasProtocolUpdates (VoltairePrototypeEra proto c)
   , ShelleyBasedEra (ShelleyEra c)
   , ShelleyBasedEra (VoltairePrototypeEra proto c)
   , SL.PreviousEra (VoltairePrototypeEra proto c) ~ ShelleyEra c
@@ -71,7 +72,7 @@ type VoltairePrototypeHardForkConstraints proto c =
   , SL.TranslateEra (VoltairePrototypeEra proto c) ShelleyGenesis
   )
 
-instance (VoltairePrototypeHardForkConstraints proto c, HasProtocolUpdates (VoltairePrototypeEra proto c)) => CanHardFork (VoltairePrototypeEras proto c) where
+instance (VoltairePrototypeHardForkConstraints proto c) => CanHardFork (VoltairePrototypeEras proto c) where
   hardForkEraTranslation = EraTranslation {
       translateLedgerState   =
           PCons translateLedgerStateShelleyToVoltairePrototypeWrapper
