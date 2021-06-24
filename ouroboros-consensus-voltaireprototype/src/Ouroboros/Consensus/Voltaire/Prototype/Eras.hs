@@ -12,7 +12,7 @@ module Ouroboros.Consensus.Voltaire.Prototype.Eras (
     -- * Eras based on the Shelley ledger
     VoltairePrototypeEra
     -- * Eras instantiated with standard crypto
-  , StandardVoltairePrototype
+  , StandardVoltairePrototypeTwo
     -- * Re-exports
   , VoltairePrototype(..)
   , EraCrypto
@@ -36,7 +36,7 @@ import qualified Shelley.Spec.Ledger.API as SL
 -------------------------------------------------------------------------------}
 
 -- | The VoltairePrototype era with standard crypto
-type StandardVoltairePrototype = VoltairePrototypeEra 'VoltairePrototype_One StandardCrypto
+type StandardVoltairePrototypeTwo = VoltairePrototypeEra 'VoltairePrototype_Two StandardCrypto
 
 instance (SL.PraosCrypto c) => ShelleyBasedEra (VoltairePrototypeEra 'VoltairePrototype_One c) where
   shelleyBasedEraName _ = "VoltairePrototypeOne"

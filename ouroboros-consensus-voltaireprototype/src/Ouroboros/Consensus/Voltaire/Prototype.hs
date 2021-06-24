@@ -32,7 +32,7 @@ import           Cardano.Ledger.Voltaire.Prototype.Class as Voltaire
 import           Ouroboros.Consensus.Voltaire.Prototype.CanHardFork (VoltairePrototypeHardForkConstraints)
 
 type ProtocolVoltairePrototype = HardForkProtocol '[ ShelleyBlock StandardShelley
-                                                   , ShelleyBlock StandardVoltairePrototype
+                                                   , ShelleyBlock StandardVoltairePrototypeTwo
                                                    ]
 
 type VoltaireConstraints proto c = VoltairePrototypeHardForkConstraints proto c
