@@ -17,31 +17,31 @@ module Ouroboros.Consensus.Voltaire.Prototype.Block (
     -- checks from GHC. But GHC expects a data type, not a type family, that's
     -- why we sometimes mention the data type of the instance in these exports
     -- instead of the abstract type family.
-  , HardForkBlock (BlockShelley, BlockVoltairePrototype)
+  , HardForkBlock (BlockShelley, BlockVoltairePrototypeOne, BlockVoltairePrototypeTwo)
     -- * Headers
   , VoltairePrototypeHeader
-  , Header (HeaderShelley, HeaderVoltairePrototype)
+  , Header (HeaderShelley, HeaderVoltairePrototypeOne, HeaderVoltairePrototypeTwo)
     -- * Generalised transactions
   , VoltairePrototypeApplyTxErr
   , VoltairePrototypeGenTx
   , VoltairePrototypeGenTxId
-  , GenTx (GenTxShelley, GenTxVoltairePrototype)
-  , HardForkApplyTxErr (ApplyTxErrShelley, ApplyTxErrVoltairePrototype, ApplyTxErrWrongEra)
-  , TxId (GenTxIdShelley, GenTxIdVoltairePrototype)
+  , GenTx (GenTxShelley, GenTxVoltairePrototypeOne, GenTxVoltairePrototypeTwo)
+  , HardForkApplyTxErr (ApplyTxErrShelley, ApplyTxErrVoltairePrototypeOne, ApplyTxErrVoltairePrototypeTwo, ApplyTxErrWrongEra)
+  , TxId (GenTxIdShelley, GenTxIdVoltairePrototypeOne, GenTxIdVoltairePrototypeTwo)
     -- * LedgerError
   , VoltairePrototypeLedgerError
-  , HardForkLedgerError (LedgerErrorShelley, LedgerErrorVoltairePrototype, LedgerErrorWrongEra)
+  , HardForkLedgerError (LedgerErrorShelley, LedgerErrorVoltairePrototypeOne, LedgerErrorVoltairePrototypeTwo, LedgerErrorWrongEra)
     -- * OtherEnvelopeError
   , VoltairePrototypeOtherHeaderEnvelopeError
-  , HardForkEnvelopeErr (OtherHeaderEnvelopeErrorShelley, OtherHeaderEnvelopeErrorVoltairePrototype, OtherHeaderEnvelopeErrorWrongEra)
+  , HardForkEnvelopeErr (OtherHeaderEnvelopeErrorShelley, OtherHeaderEnvelopeErrorVoltairePrototypeOne, OtherHeaderEnvelopeErrorVoltairePrototypeTwo, OtherHeaderEnvelopeErrorWrongEra)
     -- * TipInfo
   , VoltairePrototypeTipInfo
-  , OneEraTipInfo (TipInfoShelley, TipInfoVoltairePrototype)
+  , OneEraTipInfo (TipInfoShelley, TipInfoVoltairePrototypeOne, TipInfoVoltairePrototypeTwo)
     -- * Query
   , Either (QueryResultSuccess, QueryResultEraMismatch)
   , VoltairePrototypeQuery
   , VoltairePrototypeQueryResult
-  , Query (QueryIfCurrentShelley, QueryIfCurrentVoltairePrototype, QueryAnytimeShelley, QueryAnytimeVoltairePrototype, QueryHardFork)
+  , Query (QueryIfCurrentShelley, QueryIfCurrentVoltairePrototypeOne, QueryIfCurrentVoltairePrototypeTwo, QueryAnytimeShelley, QueryAnytimeVoltairePrototypeOne, QueryAnytimeVoltairePrototypeTwo, QueryHardFork)
     -- * CodecConfig
   , CodecConfig (VoltairePrototypeCodecConfig)
   , VoltairePrototypeCodecConfig
@@ -59,10 +59,10 @@ module Ouroboros.Consensus.Voltaire.Prototype.Block (
   , HardForkLedgerConfig (VoltairePrototypeLedgerConfig)
     -- * LedgerState
   , VoltairePrototypeLedgerState
-  , LedgerState (LedgerStateShelley, LedgerStateVoltairePrototype)
+  , LedgerState (LedgerStateShelley, LedgerStateVoltairePrototypeOne, LedgerStateVoltairePrototypeTwo)
     -- * ChainDepState
   , VoltairePrototypeChainDepState
-  , HardForkState (ChainDepStateShelley, ChainDepStateVoltairePrototype)
+  , HardForkState (ChainDepStateShelley, ChainDepStateVoltairePrototypeOne, ChainDepStateVoltairePrototypeTwo)
     -- * EraMismatch
   , EraMismatch (..)
   ) where
@@ -92,14 +92,16 @@ import           Ouroboros.Consensus.Shelley.Ledger (ShelleyBlock)
 -- | The eras in the VoltairePrototype blockchain.
 --
 -- We parameterise over the crypto: @c@.
-type VoltairePrototypeEras proto c =
+type VoltairePrototypeEras c =
   '[ ShelleyBlock (ShelleyEra c)
-   , ShelleyBlock (VoltairePrototypeEra proto c)
+   , ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_One c)
+   , ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_Two c)
    ]
 
-type ShelleyBasedVoltairePrototypeEras proto c =
+type ShelleyBasedVoltairePrototypeEras c =
   '[ ShelleyEra c
-   , VoltairePrototypeEra proto c
+   , VoltairePrototypeEra 'VoltairePrototype_One c
+   , VoltairePrototypeEra 'VoltairePrototype_Two c
    ]
 
 {-------------------------------------------------------------------------------
@@ -109,107 +111,137 @@ type ShelleyBasedVoltairePrototypeEras proto c =
 -- | /The/ VoltairePrototype block.
 --
 -- Thanks to the pattern synonyms, you can treat this as a sum type with
--- constructors 'BlockShelley' and 'BlockVoltairePrototype'.
+-- constructors 'BlockShelley', 'BlockVoltairePrototypeOne', and
+-- 'BlockVoltairePrototypeTwo'.
 --
 -- > f :: VoltairePrototypeBlock c -> _
 -- > f (BlockShelley s) = _
--- > f (BlockVoltairePrototype a) = _
+-- > f (BlockVoltairePrototypeOne a) = _
+-- > f (BlockVoltairePrototypeTwo a) = _
 --
-type VoltairePrototypeBlock proto c = HardForkBlock (VoltairePrototypeEras proto c)
+type VoltairePrototypeBlock c = HardForkBlock (VoltairePrototypeEras c)
 
-pattern BlockShelley :: ShelleyBlock (ShelleyEra c) -> VoltairePrototypeBlock proto c
+pattern BlockShelley :: ShelleyBlock (ShelleyEra c) -> VoltairePrototypeBlock c
 pattern BlockShelley b = HardForkBlock (OneEraBlock (Z (I b)))
 
-pattern BlockVoltairePrototype :: ShelleyBlock (VoltairePrototypeEra proto c) -> VoltairePrototypeBlock proto c
-pattern BlockVoltairePrototype b = HardForkBlock (OneEraBlock (S (Z (I b))))
+pattern BlockVoltairePrototypeOne :: ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_One c)
+                                  -> VoltairePrototypeBlock c
+pattern BlockVoltairePrototypeOne b = HardForkBlock (OneEraBlock (S (Z (I b))))
 
-{-# COMPLETE BlockShelley, BlockVoltairePrototype #-}
+pattern BlockVoltairePrototypeTwo :: ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_Two c)
+                                  -> VoltairePrototypeBlock c
+pattern BlockVoltairePrototypeTwo b = HardForkBlock (OneEraBlock (S (S (Z (I b)))))
+
+{-# COMPLETE BlockShelley, BlockVoltairePrototypeOne, BlockVoltairePrototypeTwo #-}
 
 {-------------------------------------------------------------------------------
   Headers
 -------------------------------------------------------------------------------}
 
 -- | The VoltairePrototype header.
-type VoltairePrototypeHeader proto c = Header (VoltairePrototypeBlock proto c)
+type VoltairePrototypeHeader c = Header (VoltairePrototypeBlock c)
 
 pattern HeaderShelley ::
      Header (ShelleyBlock (ShelleyEra c))
-  -> VoltairePrototypeHeader proto c
+  -> VoltairePrototypeHeader c
 pattern HeaderShelley h = HardForkHeader (OneEraHeader (Z h))
 
-pattern HeaderVoltairePrototype ::
-     Header (ShelleyBlock (VoltairePrototypeEra proto c))
-  -> VoltairePrototypeHeader proto c
-pattern HeaderVoltairePrototype h = HardForkHeader (OneEraHeader (S (Z h)))
+pattern HeaderVoltairePrototypeOne ::
+     Header (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_One c))
+  -> VoltairePrototypeHeader c
+pattern HeaderVoltairePrototypeOne h = HardForkHeader (OneEraHeader (S (Z h)))
 
-{-# COMPLETE HeaderShelley, HeaderVoltairePrototype #-}
+pattern HeaderVoltairePrototypeTwo ::
+     Header (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_Two c))
+  -> VoltairePrototypeHeader c
+pattern HeaderVoltairePrototypeTwo h = HardForkHeader (OneEraHeader (S (S (Z h))))
+
+{-# COMPLETE HeaderShelley, HeaderVoltairePrototypeOne, HeaderVoltairePrototypeTwo #-}
 
 {-------------------------------------------------------------------------------
   Generalised transactions
 -------------------------------------------------------------------------------}
 
 -- | The VoltairePrototype transaction.
-type VoltairePrototypeGenTx proto c = GenTx (VoltairePrototypeBlock proto c)
+type VoltairePrototypeGenTx c = GenTx (VoltairePrototypeBlock c)
 
-pattern GenTxShelley :: GenTx (ShelleyBlock (ShelleyEra c)) -> VoltairePrototypeGenTx proto c
+pattern GenTxShelley :: GenTx (ShelleyBlock (ShelleyEra c)) -> VoltairePrototypeGenTx c
 pattern GenTxShelley tx = HardForkGenTx (OneEraGenTx (Z tx))
 
-pattern GenTxVoltairePrototype :: GenTx (ShelleyBlock (VoltairePrototypeEra proto c)) -> VoltairePrototypeGenTx proto c
-pattern GenTxVoltairePrototype tx = HardForkGenTx (OneEraGenTx (S (Z tx)))
+pattern GenTxVoltairePrototypeOne :: GenTx (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_One c))
+                                  -> VoltairePrototypeGenTx c
+pattern GenTxVoltairePrototypeOne tx = HardForkGenTx (OneEraGenTx (S (Z tx)))
 
-{-# COMPLETE GenTxShelley, GenTxVoltairePrototype #-}
+pattern GenTxVoltairePrototypeTwo :: GenTx (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_Two c))
+                                  -> VoltairePrototypeGenTx c
+pattern GenTxVoltairePrototypeTwo tx = HardForkGenTx (OneEraGenTx (S (S (Z tx))))
+
+{-# COMPLETE GenTxShelley, GenTxVoltairePrototypeOne, GenTxVoltairePrototypeTwo #-}
 
 -- | The ID of an VoltairePrototype transaction.
-type VoltairePrototypeGenTxId proto c = GenTxId (VoltairePrototypeBlock proto c)
+type VoltairePrototypeGenTxId c = GenTxId (VoltairePrototypeBlock c)
 
 pattern GenTxIdShelley ::
      GenTxId (ShelleyBlock (ShelleyEra c))
-  -> VoltairePrototypeGenTxId proto c
+  -> VoltairePrototypeGenTxId c
 pattern GenTxIdShelley txid =
     HardForkGenTxId (OneEraGenTxId (Z (WrapGenTxId txid)))
 
-pattern GenTxIdVoltairePrototype ::
-     GenTxId (ShelleyBlock (VoltairePrototypeEra proto c))
-  -> VoltairePrototypeGenTxId proto c
-pattern GenTxIdVoltairePrototype txid =
+pattern GenTxIdVoltairePrototypeOne ::
+     GenTxId (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_One c))
+  -> VoltairePrototypeGenTxId c
+pattern GenTxIdVoltairePrototypeOne txid =
     HardForkGenTxId (OneEraGenTxId (S (Z (WrapGenTxId txid))))
 
-{-# COMPLETE GenTxIdShelley, GenTxIdVoltairePrototype #-}
+pattern GenTxIdVoltairePrototypeTwo ::
+     GenTxId (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_Two c))
+  -> VoltairePrototypeGenTxId c
+pattern GenTxIdVoltairePrototypeTwo txid =
+    HardForkGenTxId (OneEraGenTxId (S (S (Z (WrapGenTxId txid)))))
+
+{-# COMPLETE GenTxIdShelley, GenTxIdVoltairePrototypeOne, GenTxIdVoltairePrototypeTwo #-}
 
 -- | An error resulting from applying a 'VoltairePrototypeGenTx' to the ledger.
 --
 -- Thanks to the pattern synonyms, you can treat this as a sum type with
--- constructors 'ApplyTxErrShelley', 'ApplyTxErrVoltairePrototype', and
+-- constructors 'ApplyTxErrShelley', 'ApplyTxErrVoltairePrototypeOne', and
 -- 'ApplyTxErrWrongEra'.
 --
 -- > toText :: VoltairePrototypeApplyTxErr c -> Text
 -- > toText (ApplyTxErrShelley s) = shelleyApplyTxErrToText s
--- > tlText (ApplyTxErrVoltairePrototype a) = exampleApplyTxErrToText a
+-- > tlText (ApplyTxErrVoltairePrototypeOne a) = exampleApplyTxErrToText a
 -- > toText (ApplyTxErrWrongEra eraMismatch) =
 -- >   "Transaction from the " <> otherEraName eraMismatch <>
 -- >   " era applied to a ledger from the " <>
 -- >   ledgerEraName eraMismatch <> " era"
 --
-type VoltairePrototypeApplyTxErr proto c = HardForkApplyTxErr (VoltairePrototypeEras proto c)
+type VoltairePrototypeApplyTxErr c = HardForkApplyTxErr (VoltairePrototypeEras c)
 
 pattern ApplyTxErrShelley ::
      ApplyTxErr (ShelleyBlock (ShelleyEra c))
-  -> VoltairePrototypeApplyTxErr proto c
+  -> VoltairePrototypeApplyTxErr c
 pattern ApplyTxErrShelley err =
     HardForkApplyTxErrFromEra (OneEraApplyTxErr (Z (WrapApplyTxErr err)))
 
-pattern ApplyTxErrVoltairePrototype ::
-     ApplyTxErr (ShelleyBlock (VoltairePrototypeEra proto c))
-  -> VoltairePrototypeApplyTxErr proto c
-pattern ApplyTxErrVoltairePrototype err =
+pattern ApplyTxErrVoltairePrototypeOne ::
+     ApplyTxErr (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_One c))
+  -> VoltairePrototypeApplyTxErr c
+pattern ApplyTxErrVoltairePrototypeOne err =
     HardForkApplyTxErrFromEra (OneEraApplyTxErr (S (Z (WrapApplyTxErr err))))
 
-pattern ApplyTxErrWrongEra :: EraMismatch -> VoltairePrototypeApplyTxErr proto c
+pattern ApplyTxErrVoltairePrototypeTwo ::
+     ApplyTxErr (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_Two c))
+  -> VoltairePrototypeApplyTxErr c
+pattern ApplyTxErrVoltairePrototypeTwo err =
+    HardForkApplyTxErrFromEra (OneEraApplyTxErr (S (S (Z (WrapApplyTxErr err)))))
+
+pattern ApplyTxErrWrongEra :: EraMismatch -> VoltairePrototypeApplyTxErr c
 pattern ApplyTxErrWrongEra eraMismatch <-
     HardForkApplyTxErrWrongEra (mkEraMismatch -> eraMismatch)
 
 {-# COMPLETE ApplyTxErrShelley
-           , ApplyTxErrVoltairePrototype
+           , ApplyTxErrVoltairePrototypeOne
+           , ApplyTxErrVoltairePrototypeTwo
            , ApplyTxErrWrongEra #-}
 
 {-------------------------------------------------------------------------------
@@ -219,39 +251,47 @@ pattern ApplyTxErrWrongEra eraMismatch <-
 -- | An error resulting from applying a 'VoltairePrototypeBlock' to the ledger.
 --
 -- Thanks to the pattern synonyms, you can treat this as a sum type with
--- constructors 'LedgerErrorShelley', 'LedgerErrorVoltairePrototype', and
+-- constructors 'LedgerErrorShelley', 'LedgerErrorVoltairePrototypeOne', and
 -- 'LedgerErrorWrongEra'.
 --
 -- > toText :: VoltairePrototypeLedgerError c -> Text
 -- > toText (LedgerErrorShelley s) = shelleyLedgerErrorToText s
--- > toText (LedgerErrorVoltairePrototype a) = allegraLedgerErrorToText a
+-- > toText (LedgerErrorVoltairePrototypeOne a) = allegraLedgerErrorToText a
 -- > toText (LedgerErrorWrongEra eraMismatch) =
 -- >   "Block from the " <> otherEraName eraMismatch <>
 -- >   " era applied to a ledger from the " <>
 -- >   ledgerEraName eraMismatch <> " era"
 --
-type VoltairePrototypeLedgerError proto c = HardForkLedgerError (VoltairePrototypeEras proto c)
+type VoltairePrototypeLedgerError c = HardForkLedgerError (VoltairePrototypeEras c)
 
 pattern LedgerErrorShelley ::
      LedgerError (ShelleyBlock (ShelleyEra c))
-  -> VoltairePrototypeLedgerError proto c
+  -> VoltairePrototypeLedgerError c
 pattern LedgerErrorShelley err =
     HardForkLedgerErrorFromEra
       (OneEraLedgerError (Z (WrapLedgerErr err)))
 
-pattern LedgerErrorVoltairePrototype ::
-     LedgerError (ShelleyBlock (VoltairePrototypeEra proto c))
-  -> VoltairePrototypeLedgerError proto c
-pattern LedgerErrorVoltairePrototype err =
+pattern LedgerErrorVoltairePrototypeOne ::
+     LedgerError (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_One c))
+  -> VoltairePrototypeLedgerError c
+pattern LedgerErrorVoltairePrototypeOne err =
     HardForkLedgerErrorFromEra
       (OneEraLedgerError (S (Z (WrapLedgerErr err))))
 
-pattern LedgerErrorWrongEra :: EraMismatch -> VoltairePrototypeLedgerError proto c
+pattern LedgerErrorVoltairePrototypeTwo ::
+     LedgerError (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_Two c))
+  -> VoltairePrototypeLedgerError c
+pattern LedgerErrorVoltairePrototypeTwo err =
+    HardForkLedgerErrorFromEra
+      (OneEraLedgerError (S (S (Z (WrapLedgerErr err)))))
+
+pattern LedgerErrorWrongEra :: EraMismatch -> VoltairePrototypeLedgerError c
 pattern LedgerErrorWrongEra eraMismatch <-
     HardForkLedgerErrorWrongEra (mkEraMismatch -> eraMismatch)
 
 {-# COMPLETE LedgerErrorShelley
-           , LedgerErrorVoltairePrototype
+           , LedgerErrorVoltairePrototypeOne
+           , LedgerErrorVoltairePrototypeTwo
            , LedgerErrorWrongEra #-}
 
 {-------------------------------------------------------------------------------
@@ -259,28 +299,35 @@ pattern LedgerErrorWrongEra eraMismatch <-
 -------------------------------------------------------------------------------}
 
 -- | An error resulting from validating a 'VoltairePrototypeHeader'.
-type VoltairePrototypeOtherHeaderEnvelopeError proto c = HardForkEnvelopeErr (VoltairePrototypeEras proto c)
+type VoltairePrototypeOtherHeaderEnvelopeError c = HardForkEnvelopeErr (VoltairePrototypeEras c)
 
 pattern OtherHeaderEnvelopeErrorShelley
   :: OtherHeaderEnvelopeError (ShelleyBlock (ShelleyEra c))
-  -> VoltairePrototypeOtherHeaderEnvelopeError proto c
+  -> VoltairePrototypeOtherHeaderEnvelopeError c
 pattern OtherHeaderEnvelopeErrorShelley err =
     HardForkEnvelopeErrFromEra (OneEraEnvelopeErr (Z (WrapEnvelopeErr err)))
 
-pattern OtherHeaderEnvelopeErrorVoltairePrototype
-  :: OtherHeaderEnvelopeError (ShelleyBlock (VoltairePrototypeEra proto c))
-  -> VoltairePrototypeOtherHeaderEnvelopeError proto c
-pattern OtherHeaderEnvelopeErrorVoltairePrototype err =
+pattern OtherHeaderEnvelopeErrorVoltairePrototypeOne
+  :: OtherHeaderEnvelopeError (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_One c))
+  -> VoltairePrototypeOtherHeaderEnvelopeError c
+pattern OtherHeaderEnvelopeErrorVoltairePrototypeOne err =
     HardForkEnvelopeErrFromEra (OneEraEnvelopeErr (S (Z (WrapEnvelopeErr err))))
+
+pattern OtherHeaderEnvelopeErrorVoltairePrototypeTwo
+  :: OtherHeaderEnvelopeError (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_Two c))
+  -> VoltairePrototypeOtherHeaderEnvelopeError c
+pattern OtherHeaderEnvelopeErrorVoltairePrototypeTwo err =
+    HardForkEnvelopeErrFromEra (OneEraEnvelopeErr (S (S (Z (WrapEnvelopeErr err)))))
 
 pattern OtherHeaderEnvelopeErrorWrongEra
   :: EraMismatch
-  -> VoltairePrototypeOtherHeaderEnvelopeError proto c
+  -> VoltairePrototypeOtherHeaderEnvelopeError c
 pattern OtherHeaderEnvelopeErrorWrongEra eraMismatch <-
     HardForkEnvelopeErrWrongEra (mkEraMismatch -> eraMismatch)
 
 {-# COMPLETE OtherHeaderEnvelopeErrorShelley
-           , OtherHeaderEnvelopeErrorVoltairePrototype
+           , OtherHeaderEnvelopeErrorVoltairePrototypeOne
+           , OtherHeaderEnvelopeErrorVoltairePrototypeTwo
            , OtherHeaderEnvelopeErrorWrongEra #-}
 
 {-------------------------------------------------------------------------------
@@ -288,44 +335,58 @@ pattern OtherHeaderEnvelopeErrorWrongEra eraMismatch <-
 -------------------------------------------------------------------------------}
 
 -- | The 'TipInfo' of the VoltairePrototype chain.
-type VoltairePrototypeTipInfo proto c = OneEraTipInfo (VoltairePrototypeEras proto c)
+type VoltairePrototypeTipInfo c = OneEraTipInfo (VoltairePrototypeEras c)
 
 pattern TipInfoShelley ::
      TipInfo (ShelleyBlock (ShelleyEra c))
-  -> VoltairePrototypeTipInfo proto c
+  -> VoltairePrototypeTipInfo c
 pattern TipInfoShelley ti = OneEraTipInfo (Z (WrapTipInfo ti))
 
-pattern TipInfoVoltairePrototype ::
-     TipInfo (ShelleyBlock (VoltairePrototypeEra proto c))
-  -> VoltairePrototypeTipInfo proto c
-pattern TipInfoVoltairePrototype ti = OneEraTipInfo (S (Z (WrapTipInfo ti)))
+pattern TipInfoVoltairePrototypeOne ::
+     TipInfo (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_One c))
+  -> VoltairePrototypeTipInfo c
+pattern TipInfoVoltairePrototypeOne ti = OneEraTipInfo (S (Z (WrapTipInfo ti)))
 
-{-# COMPLETE TipInfoShelley, TipInfoVoltairePrototype #-}
+pattern TipInfoVoltairePrototypeTwo ::
+     TipInfo (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_Two c))
+  -> VoltairePrototypeTipInfo c
+pattern TipInfoVoltairePrototypeTwo ti = OneEraTipInfo (S (S (Z (WrapTipInfo ti))))
+
+{-# COMPLETE TipInfoShelley, TipInfoVoltairePrototypeOne, TipInfoVoltairePrototypeTwo #-}
 
 {-------------------------------------------------------------------------------
   Query
 -------------------------------------------------------------------------------}
 
 -- | The 'Query' of VoltairePrototype chain.
-type VoltairePrototypeQuery proto c = Query (VoltairePrototypeBlock proto c)
+type VoltairePrototypeQuery c = Query (VoltairePrototypeBlock c)
 
 -- | Shelley-specific query that can only be answered when the ledger is in the
 -- Shelley era.
 pattern QueryIfCurrentShelley
   :: ()
-  => VoltairePrototypeQueryResult proto c result ~ a
+  => VoltairePrototypeQueryResult c result ~ a
   => Query (ShelleyBlock (ShelleyEra c)) result
-  -> VoltairePrototypeQuery proto c a
+  -> VoltairePrototypeQuery c a
 pattern QueryIfCurrentShelley q = QueryIfCurrent (QZ q)
 
 -- | VoltairePrototype-specific query that can only be answered when the ledger is in the
--- VoltairePrototype era.
-pattern QueryIfCurrentVoltairePrototype
+-- VoltairePrototype_One era.
+pattern QueryIfCurrentVoltairePrototypeOne
   :: ()
-  => VoltairePrototypeQueryResult proto c result ~ a
-  => Query (ShelleyBlock (VoltairePrototypeEra proto c)) result
-  -> VoltairePrototypeQuery proto c a
-pattern QueryIfCurrentVoltairePrototype q = QueryIfCurrent (QS (QZ q))
+  => VoltairePrototypeQueryResult c result ~ a
+  => Query (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_One c)) result
+  -> VoltairePrototypeQuery c a
+pattern QueryIfCurrentVoltairePrototypeOne q = QueryIfCurrent (QS (QZ q))
+
+-- | VoltairePrototype-specific query that can only be answered when the ledger is in the
+-- VoltairePrototype_Two era.
+pattern QueryIfCurrentVoltairePrototypeTwo
+  :: ()
+  => VoltairePrototypeQueryResult c result ~ a
+  => Query (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_Two c)) result
+  -> VoltairePrototypeQuery c a
+pattern QueryIfCurrentVoltairePrototypeTwo q = QueryIfCurrent (QS (QS (QZ q)))
 
 -- | Query about the Shelley era that can be answered anytime, i.e.,
 -- independent from where the tip of the ledger is.
@@ -337,39 +398,46 @@ pattern QueryIfCurrentVoltairePrototype q = QueryIfCurrent (QS (QZ q))
 --
 pattern QueryAnytimeShelley
   :: QueryAnytime result
-  -> VoltairePrototypeQuery proto c result
+  -> VoltairePrototypeQuery c result
 pattern QueryAnytimeShelley q = QueryAnytime q (EraIndex (Z (K ())))
 
--- | Query about the Shelley era that can be answered anytime, i.e.,
+-- | Query about the Prototype One era that can be answered anytime, i.e.,
 -- independent from where the tip of the ledger is.
 --
--- For example, to ask for the start of the Shelley era (whether the tip of the
--- ledger is in the Shelley, VoltairePrototype, ... era), use:
+-- For example, to ask for the start of the VoltairePrototype One era (whether the tip of the
+-- ledger is in the VoltairePrototype One, VoltairePrototype Two, ... era), use:
 --
 -- > QueryAnytimeShelley EraStart
 --
-pattern QueryAnytimeVoltairePrototype
+pattern QueryAnytimeVoltairePrototypeOne
   :: QueryAnytime result
-  -> VoltairePrototypeQuery proto c result
-pattern QueryAnytimeVoltairePrototype q = QueryAnytime q (EraIndex (S (Z (K ()))))
+  -> VoltairePrototypeQuery c result
+pattern QueryAnytimeVoltairePrototypeOne q = QueryAnytime q (EraIndex (S (Z (K ()))))
+
+pattern QueryAnytimeVoltairePrototypeTwo
+  :: QueryAnytime result
+  -> VoltairePrototypeQuery c result
+pattern QueryAnytimeVoltairePrototypeTwo q = QueryAnytime q (EraIndex (S (S (Z (K ())))))
 
 {-# COMPLETE QueryIfCurrentShelley
-           , QueryIfCurrentVoltairePrototype
+           , QueryIfCurrentVoltairePrototypeOne
+           , QueryIfCurrentVoltairePrototypeTwo
            , QueryAnytimeShelley
-           , QueryAnytimeVoltairePrototype
+           , QueryAnytimeVoltairePrototypeOne
+           , QueryAnytimeVoltairePrototypeTwo
            , QueryHardFork #-}
 
 -- | The result of a 'VoltairePrototypeQuery'
 --
 -- Thanks to the pattern synonyms, you can treat this as a sum type with
 -- constructors 'QueryResultSuccess' and 'QueryResultEraMismatch'.
-type VoltairePrototypeQueryResult proto c = HardForkQueryResult (VoltairePrototypeEras proto c)
+type VoltairePrototypeQueryResult c = HardForkQueryResult (VoltairePrototypeEras c)
 
-pattern QueryResultSuccess :: result -> VoltairePrototypeQueryResult proto c result
+pattern QueryResultSuccess :: result -> VoltairePrototypeQueryResult c result
 pattern QueryResultSuccess result = Right result
 
 -- | A query from a different era than the ledger's era was sent.
-pattern QueryResultEraMismatch :: EraMismatch -> VoltairePrototypeQueryResult proto c result
+pattern QueryResultEraMismatch :: EraMismatch -> VoltairePrototypeQueryResult c result
 pattern QueryResultEraMismatch eraMismatch <- Left (mkEraMismatch -> eraMismatch)
 
 {-# COMPLETE QueryResultSuccess, QueryResultEraMismatch #-}
@@ -382,17 +450,19 @@ pattern QueryResultEraMismatch eraMismatch <- Left (mkEraMismatch -> eraMismatch
 --
 -- Thanks to the pattern synonyms, you can treat this as the product of
 -- the Shelley, VoltairePrototype ... 'CodecConfig's.
-type VoltairePrototypeCodecConfig proto c = CodecConfig (VoltairePrototypeBlock proto c)
+type VoltairePrototypeCodecConfig c = CodecConfig (VoltairePrototypeBlock c)
 
 pattern VoltairePrototypeCodecConfig
   :: CodecConfig (ShelleyBlock (ShelleyEra c))
-  -> CodecConfig (ShelleyBlock (VoltairePrototypeEra proto c))
-  -> VoltairePrototypeCodecConfig proto c
-pattern VoltairePrototypeCodecConfig cfgShelley cfgVoltairePrototype =
+  -> CodecConfig (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_One c))
+  -> CodecConfig (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_Two c))
+  -> VoltairePrototypeCodecConfig c
+pattern VoltairePrototypeCodecConfig cfgShelley cfgVoltairePrototypeOne cfgVoltairePrototypeTwo =
     HardForkCodecConfig {
         hardForkCodecConfigPerEra = PerEraCodecConfig
           (  cfgShelley
-          :* cfgVoltairePrototype
+          :* cfgVoltairePrototypeOne
+          :* cfgVoltairePrototypeTwo
           :* Nil
           )
       }
@@ -407,17 +477,19 @@ pattern VoltairePrototypeCodecConfig cfgShelley cfgVoltairePrototype =
 --
 -- Thanks to the pattern synonyms, you can treat this as the product of
 -- the Shelley, VoltairePrototype, ... 'BlockConfig's.
-type VoltairePrototypeBlockConfig proto c = BlockConfig (VoltairePrototypeBlock proto c)
+type VoltairePrototypeBlockConfig c = BlockConfig (VoltairePrototypeBlock c)
 
 pattern VoltairePrototypeBlockConfig
   :: BlockConfig (ShelleyBlock (ShelleyEra c))
-  -> BlockConfig (ShelleyBlock (VoltairePrototypeEra proto c))
-  -> VoltairePrototypeBlockConfig proto c
-pattern VoltairePrototypeBlockConfig cfgShelley cfgVoltairePrototype =
+  -> BlockConfig (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_One c))
+  -> BlockConfig (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_Two c))
+  -> VoltairePrototypeBlockConfig c
+pattern VoltairePrototypeBlockConfig cfgShelley cfgVoltairePrototypeOne cfgVoltairePrototypeTwo =
     HardForkBlockConfig {
         hardForkBlockConfigPerEra = PerEraBlockConfig
           (  cfgShelley
-          :* cfgVoltairePrototype
+          :* cfgVoltairePrototypeOne
+          :* cfgVoltairePrototypeTwo
           :* Nil
           )
       }
@@ -432,17 +504,19 @@ pattern VoltairePrototypeBlockConfig cfgShelley cfgVoltairePrototype =
 --
 -- Thanks to the pattern synonyms, you can treat this as the product of
 -- the Shelley, VoltairePrototype, ... 'StorageConfig's.
-type VoltairePrototypeStorageConfig proto c = StorageConfig (VoltairePrototypeBlock proto c)
+type VoltairePrototypeStorageConfig c = StorageConfig (VoltairePrototypeBlock c)
 
 pattern VoltairePrototypeStorageConfig
   :: StorageConfig (ShelleyBlock (ShelleyEra c))
-  -> StorageConfig (ShelleyBlock (VoltairePrototypeEra proto c))
-  -> VoltairePrototypeStorageConfig proto c
-pattern VoltairePrototypeStorageConfig cfgShelley cfgVoltairePrototype =
+  -> StorageConfig (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_One c))
+  -> StorageConfig (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_Two c))
+  -> VoltairePrototypeStorageConfig c
+pattern VoltairePrototypeStorageConfig cfgShelley cfgVoltairePrototypeOne cfgVoltairePrototypeTwo =
     HardForkStorageConfig {
         hardForkStorageConfigPerEra = PerEraStorageConfig
           (  cfgShelley
-          :* cfgVoltairePrototype
+          :* cfgVoltairePrototypeOne
+          :* cfgVoltairePrototypeTwo
           :* Nil
           )
       }
@@ -459,18 +533,20 @@ pattern VoltairePrototypeStorageConfig cfgShelley cfgVoltairePrototype =
 -- Shelley, VoltairePrototype, ... 'PartialConsensusConfig's.
 --
 -- NOTE: not 'ConsensusConfig', but 'PartialConsensusConfig'.
-type VoltairePrototypeConsensusConfig proto c =
-  ConsensusConfig (HardForkProtocol (VoltairePrototypeEras proto c))
+type VoltairePrototypeConsensusConfig c =
+  ConsensusConfig (HardForkProtocol (VoltairePrototypeEras c))
 
 pattern VoltairePrototypeConsensusConfig
   :: PartialConsensusConfig (BlockProtocol (ShelleyBlock (ShelleyEra c)))
-  -> PartialConsensusConfig (BlockProtocol (ShelleyBlock (VoltairePrototypeEra proto c)))
-  -> VoltairePrototypeConsensusConfig proto c
-pattern VoltairePrototypeConsensusConfig cfgShelley cfgVoltairePrototype <-
+  -> PartialConsensusConfig (BlockProtocol (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_One c)))
+  -> PartialConsensusConfig (BlockProtocol (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_Two c)))
+  -> VoltairePrototypeConsensusConfig c
+pattern VoltairePrototypeConsensusConfig cfgShelley cfgVoltairePrototypeOne cfgVoltairePrototypeTwo <-
     HardForkConsensusConfig {
         hardForkConsensusConfigPerEra = PerEraConsensusConfig
           (  WrapPartialConsensusConfig cfgShelley
-          :* WrapPartialConsensusConfig cfgVoltairePrototype
+          :* WrapPartialConsensusConfig cfgVoltairePrototypeOne
+          :* WrapPartialConsensusConfig cfgVoltairePrototypeTwo
           :* Nil
           )
       }
@@ -487,17 +563,19 @@ pattern VoltairePrototypeConsensusConfig cfgShelley cfgVoltairePrototype <-
 -- Shelley, VoltairePrototype, ... 'PartialLedgerConfig's.
 --
 -- NOTE: not 'LedgerConfig', but 'PartialLedgerConfig'.
-type VoltairePrototypeLedgerConfig proto c = HardForkLedgerConfig (VoltairePrototypeEras proto c)
+type VoltairePrototypeLedgerConfig c = HardForkLedgerConfig (VoltairePrototypeEras c)
 
 pattern VoltairePrototypeLedgerConfig
   :: PartialLedgerConfig (ShelleyBlock (ShelleyEra c))
-  -> PartialLedgerConfig (ShelleyBlock (VoltairePrototypeEra proto c))
-  -> VoltairePrototypeLedgerConfig proto c
-pattern VoltairePrototypeLedgerConfig cfgShelley cfgVoltairePrototype <-
+  -> PartialLedgerConfig (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_One c))
+  -> PartialLedgerConfig (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_Two c))
+  -> VoltairePrototypeLedgerConfig c
+pattern VoltairePrototypeLedgerConfig cfgShelley cfgVoltairePrototypeOne cfgVoltairePrototypeTwo <-
     HardForkLedgerConfig {
         hardForkLedgerConfigPerEra = PerEraLedgerConfig
           ( WrapPartialLedgerConfig cfgShelley
-          :* WrapPartialLedgerConfig cfgVoltairePrototype
+          :* WrapPartialLedgerConfig cfgVoltairePrototypeOne
+          :* WrapPartialLedgerConfig cfgVoltairePrototypeTwo
           :* Nil
           )
       }
@@ -514,26 +592,35 @@ pattern VoltairePrototypeLedgerConfig cfgShelley cfgVoltairePrototype <-
 -- 'LedgerState'. We don't give access to those internal details through the
 -- pattern synonyms. This is also the reason the pattern synonyms are not
 -- bidirectional.
-type VoltairePrototypeLedgerState proto c = LedgerState (VoltairePrototypeBlock proto c)
+type VoltairePrototypeLedgerState c = LedgerState (VoltairePrototypeBlock c)
 
 pattern LedgerStateShelley
   :: LedgerState (ShelleyBlock (ShelleyEra c))
-  -> VoltairePrototypeLedgerState proto c
+  -> VoltairePrototypeLedgerState c
 pattern LedgerStateShelley st <-
     HardForkLedgerState
       (State.HardForkState
         (TZ (State.Current { currentState = st })))
 
-pattern LedgerStateVoltairePrototype
-  :: LedgerState (ShelleyBlock (VoltairePrototypeEra proto c))
-  -> VoltairePrototypeLedgerState proto c
-pattern LedgerStateVoltairePrototype st <-
+pattern LedgerStateVoltairePrototypeOne
+  :: LedgerState (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_One c))
+  -> VoltairePrototypeLedgerState c
+pattern LedgerStateVoltairePrototypeOne st <-
     HardForkLedgerState
       (State.HardForkState
         (TS _ (TZ (State.Current { currentState = st }))))
 
+pattern LedgerStateVoltairePrototypeTwo
+  :: LedgerState (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_Two c))
+  -> VoltairePrototypeLedgerState c
+pattern LedgerStateVoltairePrototypeTwo st <-
+    HardForkLedgerState
+      (State.HardForkState
+        (TS _ (TS _ (TZ (State.Current { currentState = st })))))
+
 {-# COMPLETE LedgerStateShelley
-           , LedgerStateVoltairePrototype #-}
+           , LedgerStateVoltairePrototypeOne
+           , LedgerStateVoltairePrototypeTwo #-}
 
 {-------------------------------------------------------------------------------
   ChainDepState
@@ -545,21 +632,29 @@ pattern LedgerStateVoltairePrototype st <-
 -- 'ChainDepState'. We don't give access to those internal details through the
 -- pattern synonyms. This is also the reason the pattern synonyms are not
 -- bidirectional.
-type VoltairePrototypeChainDepState proto c = HardForkChainDepState (VoltairePrototypeEras proto c)
+type VoltairePrototypeChainDepState c = HardForkChainDepState (VoltairePrototypeEras c)
 
 pattern ChainDepStateShelley
   :: ChainDepState (BlockProtocol (ShelleyBlock (ShelleyEra c)))
-  -> VoltairePrototypeChainDepState proto c
+  -> VoltairePrototypeChainDepState c
 pattern ChainDepStateShelley st <-
     State.HardForkState
       (TZ (State.Current { currentState = WrapChainDepState st }))
 
-pattern ChainDepStateVoltairePrototype
-  :: ChainDepState (BlockProtocol (ShelleyBlock (VoltairePrototypeEra proto c)))
-  -> VoltairePrototypeChainDepState proto c
-pattern ChainDepStateVoltairePrototype st <-
+pattern ChainDepStateVoltairePrototypeOne
+  :: ChainDepState (BlockProtocol (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_One c)))
+  -> VoltairePrototypeChainDepState c
+pattern ChainDepStateVoltairePrototypeOne st <-
     State.HardForkState
       (TS _ (TZ (State.Current { currentState = WrapChainDepState st })))
 
+pattern ChainDepStateVoltairePrototypeTwo
+  :: ChainDepState (BlockProtocol (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_Two c)))
+  -> VoltairePrototypeChainDepState c
+pattern ChainDepStateVoltairePrototypeTwo st <-
+    State.HardForkState
+      (TS _ (TS _ (TZ (State.Current { currentState = WrapChainDepState st }))))
+
 {-# COMPLETE ChainDepStateShelley
-           , ChainDepStateVoltairePrototype #-}
+           , ChainDepStateVoltairePrototypeOne
+           , ChainDepStateVoltairePrototypeTwo #-}

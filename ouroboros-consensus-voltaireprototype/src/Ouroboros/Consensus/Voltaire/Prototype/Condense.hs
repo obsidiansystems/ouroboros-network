@@ -9,7 +9,7 @@ import           Ouroboros.Consensus.HardFork.Combinator.Condense
 import           Ouroboros.Consensus.Shelley.Ledger
 
 import           Ouroboros.Consensus.Voltaire.Prototype.Block (VoltairePrototypeBlock)
-import           Ouroboros.Consensus.Voltaire.Prototype.CanHardFork
+import           Shelley.Spec.Ledger.API.Protocol (PraosCrypto)
 
 {-------------------------------------------------------------------------------
   Condense
@@ -19,4 +19,4 @@ import           Ouroboros.Consensus.Voltaire.Prototype.CanHardFork
 
 instance ShelleyBasedEra era => CondenseConstraints (ShelleyBlock era)
 
-instance VoltairePrototypeHardForkConstraints proto c => CondenseConstraints (VoltairePrototypeBlock proto c)
+instance PraosCrypto c => CondenseConstraints (VoltairePrototypeBlock c)

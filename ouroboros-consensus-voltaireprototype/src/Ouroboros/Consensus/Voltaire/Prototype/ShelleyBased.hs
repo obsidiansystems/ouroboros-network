@@ -15,22 +15,23 @@ import           Ouroboros.Consensus.HardFork.Combinator
 import           Ouroboros.Consensus.Voltaire.Prototype.Block
 import           Ouroboros.Consensus.Shelley.Ledger (ShelleyBlock)
 import           Ouroboros.Consensus.Shelley.ShelleyBased
+import           Shelley.Spec.Ledger.API.Protocol (PraosCrypto)
 
 -- | When the given ledger state corresponds to a Shelley-based era, apply the
 -- given function to it.
 overShelleyBasedLedgerState ::
-     forall c proto. (ShelleyBasedEra (VoltairePrototypeEra proto c))
+     forall c. (PraosCrypto c)
   => (   forall era. (EraCrypto era ~ c, ShelleyBasedEra era)
       => LedgerState (ShelleyBlock era)
       -> LedgerState (ShelleyBlock era)
      )
-  -> LedgerState (VoltairePrototypeBlock proto c)
-  -> LedgerState (VoltairePrototypeBlock proto c)
+  -> LedgerState (VoltairePrototypeBlock c)
+  -> LedgerState (VoltairePrototypeBlock c)
 overShelleyBasedLedgerState f (HardForkLedgerState st) =
     HardForkLedgerState $ hap fs st
   where
     fs :: NP (LedgerState -.-> LedgerState)
-             (VoltairePrototypeEras proto c)
+             (VoltairePrototypeEras c)
     fs = injectShelleyNP
            reassoc
            (hcpure

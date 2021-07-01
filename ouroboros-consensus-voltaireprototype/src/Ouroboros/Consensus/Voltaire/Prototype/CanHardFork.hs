@@ -63,7 +63,6 @@ type VoltairePrototypeHardForkConstraints proto c =
   , HasProtocolUpdates (VoltairePrototypeEra proto c)
   , ShelleyBasedEra (ShelleyEra c)
   , ShelleyBasedEra (VoltairePrototypeEra proto c)
-  , SL.PreviousEra (VoltairePrototypeEra proto c) ~ ShelleyEra c
   , SL.TranslationError (VoltairePrototypeEra proto c) NewEpochState ~ Void
   , SL.TranslateEra (VoltairePrototypeEra proto c) NewEpochState
   , SL.TranslationContext (VoltairePrototypeEra proto c) ~ ()
@@ -72,57 +71,61 @@ type VoltairePrototypeHardForkConstraints proto c =
   , SL.TranslateEra (VoltairePrototypeEra proto c) ShelleyGenesis
   )
 
-instance (VoltairePrototypeHardForkConstraints proto c) => CanHardFork (VoltairePrototypeEras proto c) where
+instance ( VoltairePrototypeHardForkConstraints 'VoltairePrototype_One c
+         , VoltairePrototypeHardForkConstraints 'VoltairePrototype_Two c
+         )
+         => CanHardFork (VoltairePrototypeEras c) where
   hardForkEraTranslation = EraTranslation {
       translateLedgerState   =
-          PCons translateLedgerStateShelleyToVoltairePrototypeWrapper
+          PCons translateLedgerStateVoltaireWrapper
+        $ PCons translateLedgerStateVoltaireWrapper
         $ PNil
     , translateChainDepState =
           PCons translateChainDepStateAcrossShelley
+        $ PCons translateChainDepStateAcrossShelley
         $ PNil
     , translateLedgerView    =
           PCons translateLedgerViewAcrossShelley
+        $ PCons translateLedgerViewAcrossShelley
         $ PNil
     }
+
   hardForkChainSel =
-        -- Shelley <-> VoltairePrototype, ...
-        TCons (SelectSameProtocol :* Nil)
-        -- VoltairePrototype <-> ...
+        TCons (SelectSameProtocol :* SelectSameProtocol :* Nil)
+      $ TCons (SelectSameProtocol :* Nil)
       $ TCons Nil
       $ TNil
   hardForkInjectTxs =
-        PCons (ignoringBoth translateTxShelleyToVoltairePrototypeWrapper)
+        PCons (ignoringBoth translateTxVoltaireWrapper)
+      $ PCons (ignoringBoth translateTxVoltaireWrapper)
       $ PNil
+    where
 
-{-------------------------------------------------------------------------------
-  Translation from Shelley to VoltairePrototype
--------------------------------------------------------------------------------}
-
-translateLedgerStateShelleyToVoltairePrototypeWrapper ::
-     ( SL.PreviousEra (VoltairePrototypeEra proto c) ~ ShelleyEra c
-     , ShelleyBasedEra (VoltairePrototypeEra proto c)
-     , SL.TranslationError (VoltairePrototypeEra proto c) NewEpochState ~ Void
-     , SL.TranslateEra (VoltairePrototypeEra proto c) NewEpochState
-     , SL.TranslationContext (VoltairePrototypeEra proto c) ~ ()
-     )
+translateLedgerStateVoltaireWrapper ::
+  ( ShelleyBasedEra era
+  , ShelleyBasedEra (SL.PreviousEra era)
+  , SL.TranslateEra era NewEpochState
+  , SL.TranslationError era NewEpochState ~ Void
+  , SL.Crypto (SL.PreviousEra era) ~ SL.Crypto era
+  , SL.TranslationContext era ~ ()
+  )
   => RequiringBoth
        WrapLedgerConfig
        (Translate LedgerState)
-       (ShelleyBlock (ShelleyEra c))
-       (ShelleyBlock (VoltairePrototypeEra proto c))
-translateLedgerStateShelleyToVoltairePrototypeWrapper =
+       (ShelleyBlock (SL.PreviousEra era))
+       (ShelleyBlock era)
+translateLedgerStateVoltaireWrapper =
     ignoringBoth $
       Translate $ \_epochNo ->
         unComp . SL.translateEra' () . Comp
 
-translateTxShelleyToVoltairePrototypeWrapper ::
-     ( SL.PreviousEra (VoltairePrototypeEra proto c) ~ ShelleyEra c
-     , ShelleyBasedEra (VoltairePrototypeEra proto c)
-     , SL.TranslateEra (VoltairePrototypeEra proto c) Tx
-     , SL.TranslationContext (VoltairePrototypeEra proto c) ~ ()
-     )
+translateTxVoltaireWrapper ::
+      ( ShelleyBasedEra era
+      , SL.TranslationContext era ~ ()
+      , SL.TranslateEra era Tx
+      )
   => InjectTx
-       (ShelleyBlock (ShelleyEra c))
-       (ShelleyBlock (VoltairePrototypeEra proto c))
-translateTxShelleyToVoltairePrototypeWrapper = InjectTx $
+       (ShelleyBlock (SL.PreviousEra era))
+       (ShelleyBlock era)
+translateTxVoltaireWrapper = InjectTx $
     fmap unComp . eitherToMaybe . runExcept . SL.translateEra () . Comp
