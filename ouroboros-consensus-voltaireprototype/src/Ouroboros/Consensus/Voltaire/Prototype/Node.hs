@@ -224,7 +224,7 @@ data ProtocolParamsVoltairePrototype = ProtocolParamsVoltairePrototype {
 -- PRECONDITION: only a single set of Shelley credentials is allowed when used
 -- for mainnet (check against @'SL.gNetworkId' 'shelleyBasedGenesis'@).
 protocolInfoVoltairePrototype ::
-     forall proto c m.
+     forall c m.
      ( IOLike m
      , VoltairePrototypeHardForkConstraints 'VoltairePrototype_One c
      , VoltairePrototypeHardForkConstraints 'VoltairePrototype_Two c
@@ -233,8 +233,11 @@ protocolInfoVoltairePrototype ::
   -> ProtocolParamsShelley
   -> ProtocolParamsVoltairePrototype
   -> ProtocolParamsTransition
-       (ShelleyBlock (SL.PreviousEra (VoltairePrototypeEra proto c)))
-       (ShelleyBlock (VoltairePrototypeEra proto c))
+       (ShelleyBlock (ShelleyEra c))
+       (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_One c))
+  -> ProtocolParamsTransition
+       (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_One c))
+       (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_Two c))
   -> ProtocolInfo m (VoltairePrototypeBlock c)
 protocolInfoVoltairePrototype ProtocolParamsShelleyBased {
                         shelleyBasedGenesis           = genesisShelley
@@ -248,7 +251,10 @@ protocolInfoVoltairePrototype ProtocolParamsShelleyBased {
                         exampleProtVer = protVerVoltairePrototype
                       }
                     ProtocolParamsTransition {
-                        transitionTrigger = triggerHardForkShelleyVoltairePrototype
+                        transitionTrigger = triggerHardForkShelleyVoltairePrototypeOne
+                      }
+                    ProtocolParamsTransition {
+                        transitionTrigger = triggerHardForkPrototypeOnePrototypeTwo
                       }
   | SL.Mainnet <- SL.sgNetworkId genesisShelley
   , length credssShelleyBased > 1
@@ -291,7 +297,7 @@ protocolInfoVoltairePrototype ProtocolParamsShelleyBased {
         mkPartialLedgerConfigShelley
           genesisShelley
           maxMajorProtVer
-          triggerHardForkShelleyVoltairePrototype
+          triggerHardForkShelleyVoltairePrototypeOne
 
     kShelley :: SecurityParam
     kShelley = SecurityParam $ sgSecurityParam genesisShelley
@@ -319,7 +325,7 @@ protocolInfoVoltairePrototype ProtocolParamsShelleyBased {
           (tpraosBlockIssuerVKey <$> credssShelleyBased)
 
     partialConsensusConfigVoltairePrototype ::
-         PartialConsensusConfig (BlockProtocol (ShelleyBlock (VoltairePrototypeEra proto c)))
+         PartialConsensusConfig (BlockProtocol (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_One c)))
     partialConsensusConfigVoltairePrototype = tpraosParams
 
     partialLedgerConfigVoltairePrototypeOne :: PartialLedgerConfig (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_One c))
@@ -327,7 +333,7 @@ protocolInfoVoltairePrototype ProtocolParamsShelleyBased {
         mkPartialLedgerConfigShelley
           genesisVoltairePrototypeOne
           maxMajorProtVer
-          TriggerHardForkNever
+          triggerHardForkPrototypeOnePrototypeTwo
 
     partialLedgerConfigVoltairePrototypeTwo :: PartialLedgerConfig (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_Two c))
     partialLedgerConfigVoltairePrototypeTwo =
