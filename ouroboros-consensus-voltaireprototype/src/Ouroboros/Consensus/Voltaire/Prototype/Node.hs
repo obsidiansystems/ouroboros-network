@@ -433,7 +433,7 @@ protocolInfoVoltairePrototype ProtocolParamsShelleyBased {
               SL.initialShelleyState
                 Origin
                 0
-                (SL.genesisUTxO genesisShelley)
+                (SL.UTxO Map.empty)
                 (coin $ Val.inject (SL.word64ToCoin (SL.sgMaxLovelaceSupply genesisShelley))
                     <-> SL.balance (SL.genesisUTxO genesisShelley))
                 (SL.sgGenDelegs genesisShelley)
