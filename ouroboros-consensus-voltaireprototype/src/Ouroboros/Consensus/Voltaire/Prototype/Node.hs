@@ -21,8 +21,10 @@ module Ouroboros.Consensus.Voltaire.Prototype.Node (
     -- * SupportedNetworkProtocolVersion
   , pattern VoltairePrototypeNodeToClientVersion1
   , pattern VoltairePrototypeNodeToClientVersion2
+  , pattern VoltairePrototypeNodeToClientVersion3
   , pattern VoltairePrototypeNodeToNodeVersion1
   , pattern VoltairePrototypeNodeToNodeVersion2
+  , pattern VoltairePrototypeNodeToNodeVersion3
   ) where
 
 import qualified Codec.CBOR.Decoding as CBOR
@@ -138,9 +140,20 @@ prependTag tag payload = mconcat [
   SupportedNetworkProtocolVersion instance
 -------------------------------------------------------------------------------}
 
--- | The hard fork enabled with the Shelley and VoltairePrototype eras enabled.
+-- | The hard fork enabled with the Shelley era enabled.
 pattern VoltairePrototypeNodeToNodeVersion1 :: BlockNodeToNodeVersion (VoltairePrototypeBlock c)
 pattern VoltairePrototypeNodeToNodeVersion1 =
+    HardForkNodeToNodeEnabled
+      HardForkSpecificNodeToNodeVersion1
+      (  EraNodeToNodeEnabled ShelleyNodeToNodeVersion1
+      :* EraNodeToNodeDisabled
+      :* EraNodeToNodeDisabled
+      :* Nil
+      )
+
+-- | The hard fork enabled with the Shelley and VoltairePrototype One eras enabled.
+pattern VoltairePrototypeNodeToNodeVersion2 :: BlockNodeToNodeVersion (VoltairePrototypeBlock c)
+pattern VoltairePrototypeNodeToNodeVersion2 =
     HardForkNodeToNodeEnabled
       HardForkSpecificNodeToNodeVersion1
       (  EraNodeToNodeEnabled ShelleyNodeToNodeVersion1
@@ -149,9 +162,9 @@ pattern VoltairePrototypeNodeToNodeVersion1 =
       :* Nil
       )
 
--- | The hard fork enabled with the Shelley and VoltairePrototype eras enabled.
-pattern VoltairePrototypeNodeToNodeVersion2 :: BlockNodeToNodeVersion (VoltairePrototypeBlock c)
-pattern VoltairePrototypeNodeToNodeVersion2 =
+-- | The hard fork enabled with the Shelley and VoltairePrototype One+Two eras enabled.
+pattern VoltairePrototypeNodeToNodeVersion3 :: BlockNodeToNodeVersion (VoltairePrototypeBlock c)
+pattern VoltairePrototypeNodeToNodeVersion3 =
     HardForkNodeToNodeEnabled
       HardForkSpecificNodeToNodeVersion1
       (  EraNodeToNodeEnabled ShelleyNodeToNodeVersion1
@@ -166,14 +179,25 @@ pattern VoltairePrototypeNodeToClientVersion1 =
     HardForkNodeToClientEnabled
       HardForkSpecificNodeToClientVersion2
       (  EraNodeToClientEnabled ShelleyNodeToClientVersion3
+      :* EraNodeToClientDisabled
+      :* EraNodeToClientDisabled
+      :* Nil
+      )
+
+-- | The hard fork enabled, and the Shelley and VoltairePrototype One eras enabled using 'ShelleyNodeToClientVersion3' protocol.
+pattern VoltairePrototypeNodeToClientVersion2 :: BlockNodeToClientVersion (VoltairePrototypeBlock c)
+pattern VoltairePrototypeNodeToClientVersion2 =
+    HardForkNodeToClientEnabled
+      HardForkSpecificNodeToClientVersion2
+      (  EraNodeToClientEnabled ShelleyNodeToClientVersion3
       :* EraNodeToClientEnabled ShelleyNodeToClientVersion3
       :* EraNodeToClientDisabled
       :* Nil
       )
 
--- | The hard fork enabled, and the Shelley and VoltairePrototype eras enabled using 'ShelleyNodeToClientVersion3' protocol.
-pattern VoltairePrototypeNodeToClientVersion2 :: BlockNodeToClientVersion (VoltairePrototypeBlock c)
-pattern VoltairePrototypeNodeToClientVersion2 =
+-- | The hard fork enabled, and the Shelley and VoltairePrototype One+Two eras enabled using 'ShelleyNodeToClientVersion3' protocol.
+pattern VoltairePrototypeNodeToClientVersion3 :: BlockNodeToClientVersion (VoltairePrototypeBlock c)
+pattern VoltairePrototypeNodeToClientVersion3 =
     HardForkNodeToClientEnabled
       HardForkSpecificNodeToClientVersion2
       (  EraNodeToClientEnabled ShelleyNodeToClientVersion3
