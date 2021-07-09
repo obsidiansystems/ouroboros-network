@@ -37,6 +37,7 @@ library
                        Ouroboros.Consensus.Block.Forging
                        Ouroboros.Consensus.Block.NestedContent
                        Ouroboros.Consensus.Block.RealPoint
+                       Ouroboros.Consensus.Block.SupportsMetrics
                        Ouroboros.Consensus.Block.SupportsProtocol
                        Ouroboros.Consensus.BlockchainTime
                        Ouroboros.Consensus.BlockchainTime.API
@@ -53,6 +54,7 @@ library
                        Ouroboros.Consensus.Fragment.InFuture
                        Ouroboros.Consensus.Fragment.Validated
                        Ouroboros.Consensus.Fragment.ValidatedDiff
+                       Ouroboros.Consensus.HardFork
                        Ouroboros.Consensus.HardFork.Abstract
                        Ouroboros.Consensus.HardFork.Combinator
                        Ouroboros.Consensus.HardFork.Combinator.Abstract
@@ -78,6 +80,7 @@ library
                        Ouroboros.Consensus.HardFork.Combinator.Mempool
                        Ouroboros.Consensus.HardFork.Combinator.Node
                        Ouroboros.Consensus.HardFork.Combinator.Node.InitStorage
+                       Ouroboros.Consensus.HardFork.Combinator.Node.Metrics
                        Ouroboros.Consensus.HardFork.Combinator.PartialConfig
                        Ouroboros.Consensus.HardFork.Combinator.Protocol
                        Ouroboros.Consensus.HardFork.Combinator.Protocol.ChainSel
@@ -142,6 +145,7 @@ library
                        Ouroboros.Consensus.Node.Run
                        Ouroboros.Consensus.Node.Serialisation
                        Ouroboros.Consensus.Node.Tracers
+                       Ouroboros.Consensus.Protocol
                        Ouroboros.Consensus.Protocol.Abstract
                        Ouroboros.Consensus.Protocol.BFT
                        Ouroboros.Consensus.Protocol.LeaderSchedule

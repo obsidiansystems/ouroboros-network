@@ -13,6 +13,7 @@ packages: ./typed-protocols
           ./ouroboros-consensus-byronspec
           ./ouroboros-consensus-cardano
           ./ouroboros-consensus-cardano-test
+          ./ouroboros-consensus-example
           ./ouroboros-consensus-mock
           ./ouroboros-consensus-mock-test
           ./ouroboros-consensus-shelley
@@ -113,13 +114,13 @@ package byron-spec-chain
 package byron-spec-ledger
   tests: False
 
-package cardano-ledger
+package cardano-ledger-byron
   tests: False
 
 package cardano-ledger-shelley-ma-test
   tests: False
 
-package cardano-ledger-test
+package cardano-ledger-byron-test
   tests: False
 
 package goblins
@@ -167,9 +168,9 @@ source-repository-package
 
 source-repository-package
   type: git
-  location: https://github.com/input-output-hk/cardano-ledger-specs
-  tag: 0d0f001ec627a963fbc2cbe65273468fdb0f6b75
-  --sha256: 0aww7ls090gvsss0lq3dg95hzffblzmkhdv0x0nnz9d70srn3052
+  location: https://github.com/obsidiansystems/cardano-ledger-specs
+  tag: 16317619ef4300975f1dadbd93ef8bef1180c6c1
+  --sha256: 0zqi5zb3z04cnlg7r3i5niiczz81vmmcnfcxw074h7d1abi9b6z4
   subdir:
     byron/chain/executable-spec
     byron/crypto
@@ -184,6 +185,7 @@ source-repository-package
     shelley/chain-and-ledger/shelley-spec-ledger-test
     shelley-ma/impl
     shelley-ma/shelley-ma-test
+    example-shelley/impl
 
 source-repository-package
   type: git
