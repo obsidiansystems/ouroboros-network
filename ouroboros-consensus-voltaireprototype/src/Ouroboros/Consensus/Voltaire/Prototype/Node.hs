@@ -211,13 +211,20 @@ instance ( VoltairePrototypeHardForkConstraints 'VoltairePrototype_One c
          )
         => SupportedNetworkProtocolVersion (VoltairePrototypeBlock c) where
   supportedNodeToNodeVersions _ = Map.fromList $
-      [ (NodeToNodeV_3, VoltairePrototypeNodeToNodeVersion1)
-      , (NodeToNodeV_3, VoltairePrototypeNodeToNodeVersion2)
+      [ (NodeToNodeV_2, VoltairePrototypeNodeToNodeVersion1)
+      , (NodeToNodeV_3, VoltairePrototypeNodeToNodeVersion1)
+      , (NodeToNodeV_4, VoltairePrototypeNodeToNodeVersion2)
+      , (NodeToNodeV_5, VoltairePrototypeNodeToNodeVersion2)
+      , (NodeToNodeV_6, VoltairePrototypeNodeToNodeVersion2)
       ]
 
   supportedNodeToClientVersions _ = Map.fromList $
-      [ (NodeToClientV_4, VoltairePrototypeNodeToClientVersion1)
-      , (NodeToClientV_4, VoltairePrototypeNodeToClientVersion2)
+      [ (NodeToClientV_3, VoltairePrototypeNodeToClientVersion1)
+      , (NodeToClientV_4, VoltairePrototypeNodeToClientVersion1)
+      , (NodeToClientV_5, VoltairePrototypeNodeToClientVersion2)
+      , (NodeToClientV_6, VoltairePrototypeNodeToClientVersion2)
+      , (NodeToClientV_7, VoltairePrototypeNodeToClientVersion2)
+      , (NodeToClientV_8, VoltairePrototypeNodeToClientVersion2)
       ]
 
   latestReleasedNodeVersion = latestReleasedNodeVersionDefault
