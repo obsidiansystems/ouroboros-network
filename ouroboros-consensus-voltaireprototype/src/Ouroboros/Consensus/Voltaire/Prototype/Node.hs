@@ -58,8 +58,6 @@ import           Ouroboros.Consensus.HardFork.Combinator.Embed.Nary
 import           Ouroboros.Consensus.HardFork.Combinator.Serialisation
 
 import qualified Cardano.Ledger.Era as SL
-import           Cardano.Ledger.Val (coin, (<->))
-import qualified Cardano.Ledger.Val as Val
 import           Ouroboros.Consensus.Voltaire.Prototype.ShelleyBased
 import           Ouroboros.Consensus.Shelley.Ledger (ShelleyBlock)
 import qualified Ouroboros.Consensus.Shelley.Ledger as Shelley
@@ -459,22 +457,14 @@ protocolInfoVoltairePrototype ProtocolParamsShelleyBased {
 
         initShelleyState :: SL.ChainState (ShelleyEra c)
         initShelleyState =
-            overNewEpochState
-              (registerGenesisStaking (SL.sgStaking genesisShelley)) $
               SL.initialShelleyState
                 Origin
                 0
                 (SL.UTxO Map.empty)
-                (coin $ Val.inject (SL.word64ToCoin (SL.sgMaxLovelaceSupply genesisShelley))
-                    <-> SL.balance (SL.genesisUTxO genesisShelley))
+                (SL.word64ToCoin (SL.sgMaxLovelaceSupply genesisShelley))
                 (SL.sgGenDelegs genesisShelley)
                 (SL.sgProtocolParams genesisShelley)
                 initialNonceShelley
-
-        overNewEpochState ::
-             (SL.NewEpochState era -> SL.NewEpochState era)
-          -> (SL.ChainState    era -> SL.ChainState    era)
-        overNewEpochState f cs = cs { SL.chainNes = f (SL.chainNes cs) }
 
         register ::
              (EraCrypto era ~ c, ShelleyBasedEra era)
