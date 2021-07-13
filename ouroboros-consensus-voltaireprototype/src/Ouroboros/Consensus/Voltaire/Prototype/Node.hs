@@ -239,7 +239,7 @@ data ProtocolParamsTransition eraFrom eraTo = ProtocolParamsTransition {
       transitionTrigger    :: TriggerHardFork
     }
 
--- | Parameters needed to run Shelley
+-- | Parameters needed to run Prototype
 data ProtocolParamsVoltairePrototype = ProtocolParamsVoltairePrototype {
       exampleProtVer :: SL.ProtVer
     }
@@ -261,6 +261,7 @@ protocolInfoVoltairePrototype ::
   => ProtocolParamsShelleyBased (ShelleyEra c)
   -> ProtocolParamsShelley
   -> ProtocolParamsVoltairePrototype
+  -> ProtocolParamsVoltairePrototype
   -> ProtocolParamsTransition
        (ShelleyBlock (ShelleyEra c))
        (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_One c))
@@ -277,7 +278,10 @@ protocolInfoVoltairePrototype ProtocolParamsShelleyBased {
                         shelleyProtVer = protVerShelley
                       }
                     ProtocolParamsVoltairePrototype {
-                        exampleProtVer = protVerVoltairePrototype
+                        exampleProtVer = protVerVoltairePrototypeOne
+                      }
+                    ProtocolParamsVoltairePrototype {
+                        exampleProtVer = protVerVoltairePrototypeTwo
                       }
                     ProtocolParamsTransition {
                         transitionTrigger = triggerHardForkShelleyVoltairePrototypeOne
@@ -299,7 +303,7 @@ protocolInfoVoltairePrototype ProtocolParamsShelleyBased {
     -- The major protocol version of the last era is the maximum major protocol
     -- version we support.
     maxMajorProtVer :: MaxMajorProtVer
-    maxMajorProtVer = MaxMajorProtVer (pvMajor protVerVoltairePrototype)
+    maxMajorProtVer = MaxMajorProtVer (pvMajor protVerVoltairePrototypeTwo)
 
     -- Shelley
 
@@ -342,14 +346,14 @@ protocolInfoVoltairePrototype ProtocolParamsShelleyBased {
     blockConfigVoltairePrototypeOne :: BlockConfig (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_One c))
     blockConfigVoltairePrototypeOne =
         Shelley.mkShelleyBlockConfig
-          protVerVoltairePrototype
+          protVerVoltairePrototypeOne
           genesisVoltairePrototypeOne
           (tpraosBlockIssuerVKey <$> credssShelleyBased)
 
     blockConfigVoltairePrototypeTwo :: BlockConfig (ShelleyBlock (VoltairePrototypeEra 'VoltairePrototype_Two c))
     blockConfigVoltairePrototypeTwo =
         Shelley.mkShelleyBlockConfig
-          protVerVoltairePrototype
+          protVerVoltairePrototypeTwo
           genesisVoltairePrototypeTwo
           (tpraosBlockIssuerVKey <$> credssShelleyBased)
 
