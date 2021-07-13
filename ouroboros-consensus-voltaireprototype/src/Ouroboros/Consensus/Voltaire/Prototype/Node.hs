@@ -211,18 +211,18 @@ instance ( VoltairePrototypeHardForkConstraints 'VoltairePrototype_One c
   supportedNodeToNodeVersions _ = Map.fromList $
       [ (NodeToNodeV_2, VoltairePrototypeNodeToNodeVersion1)
       , (NodeToNodeV_3, VoltairePrototypeNodeToNodeVersion1)
-      , (NodeToNodeV_4, VoltairePrototypeNodeToNodeVersion2)
-      , (NodeToNodeV_5, VoltairePrototypeNodeToNodeVersion2)
-      , (NodeToNodeV_6, VoltairePrototypeNodeToNodeVersion2)
+      , (NodeToNodeV_4, VoltairePrototypeNodeToNodeVersion3)
+      , (NodeToNodeV_5, VoltairePrototypeNodeToNodeVersion3)
+      , (NodeToNodeV_6, VoltairePrototypeNodeToNodeVersion3)
       ]
 
   supportedNodeToClientVersions _ = Map.fromList $
       [ (NodeToClientV_3, VoltairePrototypeNodeToClientVersion1)
       , (NodeToClientV_4, VoltairePrototypeNodeToClientVersion1)
-      , (NodeToClientV_5, VoltairePrototypeNodeToClientVersion2)
-      , (NodeToClientV_6, VoltairePrototypeNodeToClientVersion2)
-      , (NodeToClientV_7, VoltairePrototypeNodeToClientVersion2)
-      , (NodeToClientV_8, VoltairePrototypeNodeToClientVersion2)
+      , (NodeToClientV_5, VoltairePrototypeNodeToClientVersion3)
+      , (NodeToClientV_6, VoltairePrototypeNodeToClientVersion3)
+      , (NodeToClientV_7, VoltairePrototypeNodeToClientVersion3)
+      , (NodeToClientV_8, VoltairePrototypeNodeToClientVersion3)
       ]
 
   latestReleasedNodeVersion = latestReleasedNodeVersionDefault
