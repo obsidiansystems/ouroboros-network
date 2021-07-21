@@ -71,4 +71,4 @@ instance SL.PraosCrypto c => HasProtocolUpdates (VoltairePrototypeEra 'VoltaireP
     let (proposalsInv, quorum, currentEpoch) = Two.protocolUpdates genesis st
     in protocolUpdatesShelley proposalsInv quorum currentEpoch
   getProposedProtocolUpdates = Two.getProposedUpdates
-  exampleProposedProtocolUpdates _ = Two.exampleProposedProtocolUpdatesShelley
+  exampleProposedProtocolUpdates _ = Two.exampleProposedProtocolUpdatesVoltaire

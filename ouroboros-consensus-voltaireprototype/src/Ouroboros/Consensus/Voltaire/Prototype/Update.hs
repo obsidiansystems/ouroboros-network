@@ -14,7 +14,7 @@
 module Ouroboros.Consensus.Voltaire.Prototype.Update
 ( getProposedUpdates
 , protocolUpdates
-, exampleProposedProtocolUpdatesShelley
+, exampleProposedProtocolUpdatesVoltaire
 , Two.ProposedUpdates
 )
 where
@@ -100,12 +100,12 @@ protocolUpdates genesis st =
 -- | TODO: add a 'Two.BodyMIR' value as well.
 --   See 'Test.Shelley.Spec.Ledger.Examples.Mir.txbodyEx1'
 --   for an example of this.
-exampleProposedProtocolUpdatesShelley ::
+exampleProposedProtocolUpdatesVoltaire ::
   ( ShelleyBasedEra era
   , SL.PParamsDelta era ~ SL.PParamsUpdate era
   )
   => Two.ProposedUpdates era
-exampleProposedProtocolUpdatesShelley =
+exampleProposedProtocolUpdatesVoltaire =
   Two.ProposedUpdates $ fmap Two.BodyPPUP map'
  where
   map' = Map.singleton
